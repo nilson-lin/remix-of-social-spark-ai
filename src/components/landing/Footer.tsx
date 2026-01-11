@@ -3,49 +3,39 @@ import { Sparkles } from 'lucide-react';
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
-            </div>
-            <span className="font-bold text-lg">CreativeAI Social</span>
-          </Link>
-
-          {/* Links */}
-          <div className="flex items-center gap-8">
-            <a
-              href="#features"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Funcionalidades
-            </a>
-            <a
-              href="#pricing"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Preços
-            </a>
-            <a
-              href="#"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Termos
-            </a>
-            <a
-              href="#"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Privacidade
-            </a>
+    <footer className="border-t border-border/50 bg-muted/30">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="md:col-span-2">
+            <Link to="/" className="flex items-center gap-2 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <span className="font-bold text-lg">Creative<span className="gradient-text">Flow</span></span>
+            </Link>
+            <p className="text-muted-foreground text-sm max-w-sm">
+              Plataforma de criação de criativos com IA para redes sociais. Gere imagens, textos e vídeos profissionais em segundos.
+            </p>
           </div>
-
-          {/* Copyright */}
-          <p className="text-sm text-muted-foreground">
-            © 2025 CreativeAI. Todos os direitos reservados.
-          </p>
+          <div>
+            <h4 className="font-semibold mb-4">Produto</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="#features" className="hover:text-foreground">Funcionalidades</a></li>
+              <li><a href="#pricing" className="hover:text-foreground">Preços</a></li>
+              <li><a href="#types" className="hover:text-foreground">Tipos de criativos</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-semibold mb-4">Suporte</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><a href="#" className="hover:text-foreground">Central de ajuda</a></li>
+              <li><a href="#" className="hover:text-foreground">Termos de uso</a></li>
+              <li><a href="#" className="hover:text-foreground">Privacidade</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="border-t border-border/50 mt-12 pt-8 text-center text-sm text-muted-foreground">
+          © {new Date().getFullYear()} CreativeFlow AI. Todos os direitos reservados.
         </div>
       </div>
     </footer>
