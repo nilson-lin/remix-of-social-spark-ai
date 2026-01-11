@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check, Sparkles } from 'lucide-react';
+import { Check, Sparkles, Zap, Building2 } from 'lucide-react';
 
 const plans = [
   {
@@ -10,49 +10,58 @@ const plans = [
     period: '/mês',
     description: 'Perfeito para testar a plataforma',
     credits: '10 créditos/mês',
+    icon: Zap,
     features: [
       '10 criativos por mês',
       'Texto + imagem',
       'Todas as redes sociais',
       'Histórico de 30 dias',
+      '3 variações de copy',
     ],
     cta: 'Começar grátis',
     highlighted: false,
   },
   {
-    name: 'Starter',
-    price: 'R$ 47',
+    name: 'Pro',
+    price: 'R$ 67',
     period: '/mês',
-    description: 'Para profissionais independentes',
-    credits: '100 créditos/mês',
+    description: 'Para profissionais e criadores',
+    credits: '150 créditos/mês',
+    icon: Sparkles,
     features: [
-      '100 criativos por mês',
-      'Texto + imagem',
+      '150 criativos por mês',
+      'Texto + imagem + vídeo',
       'Todas as redes sociais',
       'Histórico ilimitado',
       '3 variações de copy',
-      'Suporte por email',
+      'Upload de referência',
+      'Enhancement de imagem',
+      'Suporte prioritário',
     ],
-    cta: 'Assinar agora',
+    cta: 'Assinar Pro',
     highlighted: true,
   },
   {
-    name: 'Pro',
-    price: 'R$ 97',
+    name: 'Agência',
+    price: 'R$ 197',
     period: '/mês',
     description: 'Para equipes e agências',
     credits: '500 créditos/mês',
+    icon: Building2,
     features: [
       '500 criativos por mês',
-      'Texto + imagem',
+      'Texto + imagem + vídeo',
       'Todas as redes sociais',
       'Histórico ilimitado',
       '3 variações de copy',
-      'Suporte prioritário',
+      'Upload de referência',
+      'Enhancement de imagem',
+      'Suporte VIP 24/7',
       'API access',
       'White label',
+      'Múltiplos usuários',
     ],
-    cta: 'Assinar agora',
+    cta: 'Falar com vendas',
     highlighted: false,
   },
 ];
@@ -69,7 +78,7 @@ export function Pricing() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <span className="inline-block px-4 py-2 rounded-full border border-border/50 bg-muted/30 text-sm text-muted-foreground mb-4">
+          <span className="inline-block px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-sm font-medium text-primary mb-4">
             Preços
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
@@ -78,7 +87,7 @@ export function Pricing() {
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Comece grátis e escale conforme sua necessidade. 
-            Cancele a qualquer momento.
+            Cancele a qualquer momento, sem burocracia.
           </p>
         </motion.div>
 
@@ -91,56 +100,78 @@ export function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative glass-card p-8 ${
+              className={`relative ${plan.highlighted ? 'md:-mt-4 md:mb-4' : ''}`}
+            >
+              <div className={`glass-card p-8 h-full ${
                 plan.highlighted
                   ? 'border-primary/50 glow'
                   : 'border-border/50'
-              }`}
-            >
-              {plan.highlighted && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground">
-                    <Sparkles className="w-3 h-3" />
-                    Mais popular
-                  </span>
-                </div>
-              )}
+              }`}>
+                {plan.highlighted && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">
+                      <Sparkles className="w-3 h-3" />
+                      Mais popular
+                    </span>
+                  </div>
+                )}
 
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {plan.description}
-                </p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">{plan.price}</span>
-                  <span className="text-muted-foreground">{plan.period}</span>
+                <div className="mb-6">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                    plan.highlighted ? 'bg-primary/20' : 'bg-muted'
+                  }`}>
+                    <plan.icon className={`w-6 h-6 ${plan.highlighted ? 'text-primary' : 'text-muted-foreground'}`} />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {plan.description}
+                  </p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-muted-foreground">{plan.period}</span>
+                  </div>
+                  <p className={`text-sm mt-2 font-medium ${
+                    plan.highlighted ? 'text-primary' : 'text-accent'
+                  }`}>{plan.credits}</p>
                 </div>
-                <p className="text-sm text-primary mt-2">{plan.credits}</p>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-2 text-sm">
+                      <Check className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link to="/auth" className="block">
+                  <Button
+                    className={`w-full h-12 ${
+                      plan.highlighted
+                        ? 'btn-primary'
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                  >
+                    {plan.cta}
+                  </Button>
+                </Link>
               </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-accent" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <Link to="/auth">
-                <Button
-                  className={`w-full h-12 ${
-                    plan.highlighted
-                      ? 'btn-primary'
-                      : 'bg-muted hover:bg-muted/80'
-                  }`}
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
             </motion.div>
           ))}
         </div>
+
+        {/* Guarantee */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mt-12"
+        >
+          <p className="text-muted-foreground text-sm">
+            ✓ Garantia de 7 dias • ✓ Cancele quando quiser • ✓ Sem taxa de adesão
+          </p>
+        </motion.div>
       </div>
     </section>
   );
