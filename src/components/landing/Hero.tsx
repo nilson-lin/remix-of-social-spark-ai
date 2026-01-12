@@ -39,8 +39,7 @@ export function Hero() {
         >
           Crie criativos profissionais{' '}
           <br className="hidden md:block" />
-          e vídeos{' '}
-          <span className="gradient-text">em segundos com IA</span>
+          e vídeos <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">em segundos com IA</span>
         </motion.h1>
 
         {/* Subheadline */}
