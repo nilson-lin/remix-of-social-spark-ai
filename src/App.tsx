@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import CreateCreative from "./pages/CreateCreative";
+import CreateVideo from "./pages/CreateVideo";
 import CreativeDetail from "./pages/CreativeDetail";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/create" element={<CreateCreative />} />
+            <Route path="/create-video" element={<CreateVideo />} />
             <Route path="/creative/:id" element={<CreativeDetail />} />
             <Route path="/history" element={<History />} />
             <Route path="*" element={<NotFound />} />
