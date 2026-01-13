@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Admin from "./pages/Admin";
 import CreateCreative from "./pages/CreateCreative";
 import CreateVideo from "./pages/CreateVideo";
 import CreativeDetail from "./pages/CreativeDetail";
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin" element={<Admin />} />
             <Route path="/create" element={<CreateCreative />} />
             <Route path="/create-video" element={<CreateVideo />} />
             <Route path="/creative/:id" element={<CreativeDetail />} />
