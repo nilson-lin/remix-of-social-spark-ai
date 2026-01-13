@@ -2,88 +2,58 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Check, Sparkles, Zap, Building2 } from 'lucide-react';
-
-const plans = [
-  {
-    name: 'Gratuito',
-    price: 'R$ 0',
-    period: '/mês',
-    description: 'Perfeito para testar a plataforma',
-    credits: '10 créditos/mês',
-    icon: Zap,
-    features: [
-      '10 criativos por mês',
-      'Texto + imagem',
-      'Todas as redes sociais',
-      'Histórico de 30 dias',
-      '3 variações de copy',
-    ],
-    cta: 'Começar grátis',
-    highlighted: false,
-  },
-  {
-    name: 'Pro',
-    price: 'R$ 67',
-    period: '/mês',
-    description: 'Para profissionais e criadores',
-    credits: '150 créditos/mês',
-    icon: Sparkles,
-    features: [
-      '150 criativos por mês',
-      'Texto + imagem + vídeo',
-      'Todas as redes sociais',
-      'Histórico ilimitado',
-      '3 variações de copy',
-      'Upload de referência',
-      'Enhancement de imagem',
-      'Suporte prioritário',
-    ],
-    cta: 'Assinar Pro',
-    highlighted: true,
-  },
-  {
-    name: 'Agência',
-    price: 'R$ 197',
-    period: '/mês',
-    description: 'Para equipes e agências',
-    credits: '500 créditos/mês',
-    icon: Building2,
-    features: [
-      '500 criativos por mês',
-      'Texto + imagem + vídeo',
-      'Todas as redes sociais',
-      'Histórico ilimitado',
-      '3 variações de copy',
-      'Upload de referência',
-      'Enhancement de imagem',
-      'Suporte VIP 24/7',
-      'API access',
-      'White label',
-      'Múltiplos usuários',
-    ],
-    cta: 'Falar com vendas',
-    highlighted: false,
-  },
-];
-
+const plans = [{
+  name: 'Gratuito',
+  price: 'R$ 0',
+  period: '/mês',
+  description: 'Perfeito para testar a plataforma',
+  credits: '10 créditos/mês',
+  icon: Zap,
+  features: ['10 criativos por mês', 'Texto + imagem', 'Todas as redes sociais', 'Histórico de 30 dias', '3 variações de copy'],
+  cta: 'Começar grátis',
+  highlighted: false
+}, {
+  name: 'Pro',
+  price: 'R$ 67',
+  period: '/mês',
+  description: 'Para profissionais e criadores',
+  credits: '150 créditos/mês',
+  icon: Sparkles,
+  features: ['150 criativos por mês', 'Texto + imagem + vídeo', 'Todas as redes sociais', 'Histórico ilimitado', '3 variações de copy', 'Upload de referência', 'Enhancement de imagem', 'Suporte prioritário'],
+  cta: 'Assinar Pro',
+  highlighted: true
+}, {
+  name: 'Agência',
+  price: 'R$ 197',
+  period: '/mês',
+  description: 'Para equipes e agências',
+  credits: '500 créditos/mês',
+  icon: Building2,
+  features: ['500 criativos por mês', 'Texto + imagem + vídeo', 'Todas as redes sociais', 'Histórico ilimitado', '3 variações de copy', 'Upload de referência', 'Enhancement de imagem', 'Suporte VIP 24/7', 'API access', 'White label', 'Múltiplos usuários'],
+  cta: 'Falar com vendas',
+  highlighted: false
+}];
 export function Pricing() {
-  return (
-    <section className="py-24 px-4" id="pricing">
+  return <section className="py-24 px-4" id="pricing">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} whileInView={{
+        opacity: 1,
+        y: 0
+      }} viewport={{
+        once: true
+      }} transition={{
+        duration: 0.5
+      }} className="text-center mb-16">
           <span className="inline-block px-4 py-2 rounded-full border border-primary/30 bg-primary/10 text-sm font-medium text-primary mb-4">
             Preços
           </span>
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Escolha o plano ideal{' '}
-            <span className="gradient-text">para você</span>
+            
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Comece grátis e escale conforme sua necessidade. 
@@ -93,33 +63,28 @@ export function Pricing() {
 
         {/* Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`relative ${plan.highlighted ? 'md:-mt-4 md:mb-4' : ''}`}
-            >
-              <div className={`glass-card p-8 h-full ${
-                plan.highlighted
-                  ? 'border-primary/50 glow'
-                  : 'border-border/50'
-              }`}>
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+          {plans.map((plan, index) => <motion.div key={plan.name} initial={{
+          opacity: 0,
+          y: 20
+        }} whileInView={{
+          opacity: 1,
+          y: 0
+        }} viewport={{
+          once: true
+        }} transition={{
+          duration: 0.5,
+          delay: index * 0.1
+        }} className={`relative ${plan.highlighted ? 'md:-mt-4 md:mb-4' : ''}`}>
+              <div className={`glass-card p-8 h-full ${plan.highlighted ? 'border-primary/50 glow' : 'border-border/50'}`}>
+                {plan.highlighted && <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground">
                       <Sparkles className="w-3 h-3" />
                       Mais popular
                     </span>
-                  </div>
-                )}
+                  </div>}
 
                 <div className="mb-6">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
-                    plan.highlighted ? 'bg-primary/20' : 'bg-muted'
-                  }`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${plan.highlighted ? 'bg-primary/20' : 'bg-muted'}`}>
                     <plan.icon className={`w-6 h-6 ${plan.highlighted ? 'text-primary' : 'text-muted-foreground'}`} />
                   </div>
                   <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
@@ -130,49 +95,41 @@ export function Pricing() {
                     <span className="text-4xl font-bold">{plan.price}</span>
                     <span className="text-muted-foreground">{plan.period}</span>
                   </div>
-                  <p className={`text-sm mt-2 font-medium ${
-                    plan.highlighted ? 'text-primary' : 'text-accent'
-                  }`}>{plan.credits}</p>
+                  <p className={`text-sm mt-2 font-medium ${plan.highlighted ? 'text-primary' : 'text-accent'}`}>{plan.credits}</p>
                 </div>
 
                 <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm">
+                  {plan.features.map(feature => <li key={feature} className="flex items-start gap-2 text-sm">
                       <Check className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
                       <span>{feature}</span>
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
 
                 <Link to="/auth" className="block">
-                  <Button
-                    className={`w-full h-12 ${
-                      plan.highlighted
-                        ? 'btn-primary'
-                        : 'bg-muted hover:bg-muted/80'
-                    }`}
-                  >
+                  <Button className={`w-full h-12 ${plan.highlighted ? 'btn-primary' : 'bg-muted hover:bg-muted/80'}`}>
                     {plan.cta}
                   </Button>
                 </Link>
               </div>
-            </motion.div>
-          ))}
+            </motion.div>)}
         </div>
 
         {/* Guarantee */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mt-12"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} whileInView={{
+        opacity: 1,
+        y: 0
+      }} viewport={{
+        once: true
+      }} transition={{
+        duration: 0.5
+      }} className="text-center mt-12">
           <p className="text-muted-foreground text-sm">
             ✓ Garantia de 7 dias • ✓ Cancele quando quiser • ✓ Sem taxa de adesão
           </p>
         </motion.div>
       </div>
-    </section>
-  );
+    </section>;
 }

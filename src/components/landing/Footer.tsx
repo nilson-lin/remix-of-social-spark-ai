@@ -1,9 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-
 export function Footer() {
-  return (
-    <footer className="border-t border-border/50 bg-muted/30">
+  return <footer className="border-t border-border/50 bg-muted/30">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
@@ -11,7 +9,7 @@ export function Footer() {
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-primary" />
               </div>
-              <span className="font-bold text-lg">Creative<span className="gradient-text">Flow</span></span>
+              
             </Link>
             <p className="text-muted-foreground text-sm max-w-sm">
               Plataforma de criação de criativos com IA para redes sociais. Gere imagens, textos e vídeos profissionais em segundos.
@@ -38,6 +36,5 @@ export function Footer() {
           © {new Date().getFullYear()} CreativeFlow AI. Todos os direitos reservados.
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 }
