@@ -52,7 +52,7 @@ interface UploadedImage {
 }
 
 export default function CreateVideo() {
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -187,7 +187,8 @@ export default function CreateVideo() {
       return;
     }
 
-    if (!profile || profile.credits < 2) {
+    // Skip credit check for admins
+    if (!isAdmin && (!profile || profile.credits < 2)) {
       toast({
         title: 'Créditos insuficientes',
         description: 'Você precisa de 2 créditos para gerar um vídeo.',
@@ -220,14 +221,16 @@ export default function CreateVideo() {
 
       if (insertError) throw insertError;
 
-      // Deduct credits
-      const { error: creditError } = await supabase
-        .from('profiles')
-        .update({ credits: profile.credits - 2 })
-        .eq('id', user!.id);
+      // Deduct credits (skip for admins)
+      if (!isAdmin) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: profile!.credits - 2 })
+          .eq('id', user!.id);
 
-      if (creditError) {
-        console.error('Error deducting credits:', creditError);
+        if (creditError) {
+          console.error('Error deducting credits:', creditError);
+        }
       }
 
       // Call edge function
