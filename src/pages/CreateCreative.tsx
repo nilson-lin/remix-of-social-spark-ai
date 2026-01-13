@@ -52,7 +52,7 @@ const visualTemplates = [
 ];
 
 export default function CreateCreative() {
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -95,8 +95,8 @@ export default function CreateCreative() {
       return;
     }
 
-    // Check credits
-    if (!profile || profile.credits < 1) {
+    // Check credits (skip for admins)
+    if (!isAdmin && (!profile || profile.credits < 1)) {
       toast({
         title: 'Créditos insuficientes',
         description: 'Você não tem créditos suficientes. Faça upgrade do seu plano.',
@@ -126,14 +126,16 @@ export default function CreateCreative() {
 
       if (insertError) throw insertError;
 
-      // Deduct credit
-      const { error: creditError } = await supabase
-        .from('profiles')
-        .update({ credits: profile.credits - 1 })
-        .eq('id', user!.id);
+      // Deduct credit (skip for admins)
+      if (!isAdmin) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: profile!.credits - 1 })
+          .eq('id', user!.id);
 
-      if (creditError) {
-        console.error('Error deducting credit:', creditError);
+        if (creditError) {
+          console.error('Error deducting credit:', creditError);
+        }
       }
 
       // Call the generate edge function with new fields
