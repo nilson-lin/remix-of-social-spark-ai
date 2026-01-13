@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
   Sparkles, 
   Plus, 
@@ -13,14 +14,16 @@ import {
   TrendingUp,
   Image as ImageIcon,
   ChevronRight,
-  User
+  User,
+  Crown,
+  Shield
 } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Creative = Tables<'creatives'>;
 
 export default function Dashboard() {
-  const { user, profile, loading, signOut, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, loading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [creatives, setCreatives] = useState<Creative[]>([]);
   const [loadingCreatives, setLoadingCreatives] = useState(true);
@@ -128,11 +131,30 @@ export default function Dashboard() {
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary" />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isAdmin ? 'bg-destructive/20' : 'bg-primary/20'}`}>
+                  {isAdmin ? (
+                    <Crown className="w-4 h-4 text-destructive" />
+                  ) : (
+                    <User className="w-4 h-4 text-primary" />
+                  )}
                 </div>
                 <span className="text-sm hidden sm:block">{profile?.full_name || user?.email}</span>
+                {isAdmin && (
+                  <Badge variant="destructive" className="gap-1 hidden sm:flex">
+                    <Shield className="w-3 h-3" />
+                    Admin
+                  </Badge>
+                )}
               </div>
+
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Shield className="w-4 h-4" />
+                    <span className="hidden sm:inline">Painel Admin</span>
+                  </Button>
+                </Link>
+              )}
 
               <Button variant="ghost" size="icon" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4" />
