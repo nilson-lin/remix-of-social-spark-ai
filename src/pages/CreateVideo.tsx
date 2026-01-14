@@ -44,6 +44,15 @@ const durations = [
   { value: 15, label: '15 segundos' },
 ];
 
+const videoStyles = [
+  { id: 'cinematic', label: 'Cinematográfico', emoji: '🎬', description: 'Movimentos suaves, dramático' },
+  { id: 'energetic', label: 'Energético', emoji: '⚡', description: 'Rápido, dinâmico, vibrante' },
+  { id: 'calm', label: 'Calmo', emoji: '🌊', description: 'Relaxante, suave, fluido' },
+  { id: 'professional', label: 'Profissional', emoji: '💼', description: 'Corporativo, limpo, elegante' },
+  { id: 'playful', label: 'Divertido', emoji: '🎉', description: 'Alegre, colorido, animado' },
+  { id: 'dramatic', label: 'Dramático', emoji: '🔥', description: 'Intenso, impactante, épico' },
+];
+
 interface UploadedImage {
   file: File;
   preview: string;
@@ -61,6 +70,7 @@ export default function CreateVideo() {
     description: '',
     platform: 'reels',
     duration: 5,
+    style: 'cinematic',
   });
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -243,6 +253,7 @@ export default function CreateVideo() {
           duration: formData.duration,
           aspectRatio: selectedPlatform?.aspectRatio || '9:16',
           platform: formData.platform,
+          style: formData.style,
         },
       });
 
@@ -456,6 +467,36 @@ export default function CreateVideo() {
                         )} />
                         <span className="text-xs font-medium block">{platform.label}</span>
                         <span className="text-[10px] text-muted-foreground">{platform.aspectRatio}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Style Selection */}
+              <div className="space-y-4">
+                <Label className="block">Estilo do Vídeo</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {videoStyles.map((style) => {
+                    const isSelected = formData.style === style.id;
+                    return (
+                      <button
+                        key={style.id}
+                        type="button"
+                        onClick={() => handleChange('style', style.id)}
+                        className={cn(
+                          "p-4 rounded-xl border-2 text-left transition-all duration-200",
+                          isSelected 
+                            ? "border-primary bg-primary/10" 
+                            : "border-border/50 hover:border-primary/50"
+                        )}
+                      >
+                        <span className="text-2xl mb-2 block">{style.emoji}</span>
+                        <span className={cn(
+                          "text-sm font-medium block",
+                          isSelected ? "text-primary" : ""
+                        )}>{style.label}</span>
+                        <span className="text-[11px] text-muted-foreground">{style.description}</span>
                       </button>
                     );
                   })}

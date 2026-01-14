@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { videoId, title, description, sourceImages, duration, aspectRatio, platform } = await req.json();
+    const { videoId, title, description, sourceImages, duration, aspectRatio, platform, style } = await req.json();
 
-    console.log("Generate video request:", { videoId, title, platform, duration, aspectRatio });
+    console.log("Generate video request:", { videoId, title, platform, duration, aspectRatio, style });
     console.log("Source images:", sourceImages);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -28,7 +28,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Build prompt for video generation
-    const prompt = buildVideoPrompt(title, description, platform, aspectRatio);
+    const prompt = buildVideoPrompt(title, description, platform, aspectRatio, style || 'cinematic');
     console.log("Video prompt:", prompt);
 
     // Use the first image as the starting frame
@@ -116,27 +116,93 @@ serve(async (req) => {
   }
 });
 
-function buildVideoPrompt(title: string, description: string, platform: string, aspectRatio: string): string {
+function buildVideoPrompt(title: string, description: string, platform: string, aspectRatio: string, style: string): string {
   const platformDescriptions: Record<string, string> = {
-    reels: "Instagram Reels vertical video",
-    tiktok: "TikTok vertical short-form video",
-    youtube_shorts: "YouTube Shorts vertical video",
-    feed: "Instagram feed square video",
-    landscape: "YouTube/Facebook landscape video",
+    reels: "Instagram Reels vertical video optimized for mobile viewing",
+    tiktok: "TikTok viral-worthy vertical short-form video",
+    youtube_shorts: "YouTube Shorts attention-grabbing vertical video",
+    feed: "Instagram feed square video with perfect 1:1 composition",
+    landscape: "YouTube/Facebook cinematic landscape video",
+  };
+
+  const styleDescriptions: Record<string, string> = {
+    cinematic: `Cinematic masterpiece with:
+      - Smooth dolly/crane movements and elegant camera work
+      - Film-like color grading with rich contrast and depth
+      - Dramatic lighting with volumetric rays and lens flares
+      - Slow, deliberate pacing with meaningful transitions
+      - Anamorphic lens effects and subtle film grain
+      - Ken Burns effect with parallax depth
+      - Professional Hollywood-style cinematography`,
+    
+    energetic: `High-energy dynamic video with:
+      - Fast-paced cuts and quick zoom transitions
+      - Vibrant, saturated colors that pop
+      - Beat-sync ready with punchy movements
+      - Glitch effects and motion blur for speed
+      - Dynamic scaling and rotation effects
+      - Particle effects and light trails
+      - Exciting, attention-grabbing rhythm`,
+    
+    calm: `Peaceful, zen-like video with:
+      - Gentle, floating camera movements
+      - Soft, dreamy color palette with muted tones
+      - Slow dissolve transitions
+      - Subtle breathing effect (gentle zoom in/out)
+      - Soft focus and bokeh elements
+      - Flowing, organic motion paths
+      - Meditative, relaxing atmosphere`,
+    
+    professional: `Corporate-quality professional video with:
+      - Clean, precise camera movements
+      - Sleek, modern color grading
+      - Minimalist transitions and effects
+      - Elegant typography-ready compositions
+      - Sharp focus and clear visuals
+      - Subtle scaling for emphasis
+      - Business-appropriate sophisticated style`,
+    
+    playful: `Fun, engaging video with:
+      - Bouncy, playful camera movements
+      - Bright, cheerful color palette
+      - Quirky transitions and pop effects
+      - Confetti and sparkle overlays
+      - Cartoon-like motion with squash/stretch
+      - Energetic but friendly pacing
+      - Joyful, celebratory atmosphere`,
+    
+    dramatic: `Epic, impactful video with:
+      - Powerful camera pushes and reveals
+      - High contrast, moody color grading
+      - Intense light flares and god rays
+      - Epic scale transitions
+      - Thunder/smoke overlay effects
+      - Building tension with zoom
+      - Blockbuster movie trailer style`,
   };
 
   const platformDesc = platformDescriptions[platform] || "social media video";
+  const styleDesc = styleDescriptions[style] || styleDescriptions.cinematic;
   
-  let prompt = `Create a dynamic ${platformDesc} with ${aspectRatio} aspect ratio. `;
-  prompt += `Title: ${title}. `;
-  
-  if (description) {
-    prompt += `Description: ${description}. `;
-  }
-  
-  prompt += "The video should be engaging, professional, with smooth transitions and modern visual effects. ";
-  prompt += "Add subtle motion to the image, like zoom effects, parallax, or gentle panning. ";
-  prompt += "Make it visually appealing for social media with vibrant colors and attention-grabbing movement.";
+  let prompt = `Create a stunning ${platformDesc} with ${aspectRatio} aspect ratio.
+
+CONTENT:
+Title: "${title}"
+${description ? `Description: ${description}` : ''}
+
+STYLE REQUIREMENTS:
+${styleDesc}
+
+TECHNICAL EXCELLENCE:
+- Ultra high quality rendering with crisp details
+- Perfect exposure and white balance
+- Smooth 24fps cinematic motion
+- Professional color science
+- Seamless loop-ready ending
+- Social media optimized for maximum engagement
+- Trending visual effects for ${new Date().getFullYear()}
+
+Make this video absolutely stunning and scroll-stopping. It should feel premium, polished, and ready for viral success.`;
   
   return prompt;
 }
