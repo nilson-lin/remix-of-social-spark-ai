@@ -67,10 +67,25 @@ serve(async (req) => {
     }
 
     const videoResult = await videoResponse.json();
-    console.log("Video generation result:", JSON.stringify(videoResult).substring(0, 200));
+    console.log("Video generation result:", JSON.stringify(videoResult).substring(0, 500));
 
-    // Extract video URL from response
-    const videoUrl = videoResult.video_url || videoResult.data?.video_url || null;
+    // Extract video URL from response - handle multiple response formats
+    let videoUrl = null;
+    if (videoResult.video_url) {
+      videoUrl = videoResult.video_url;
+    } else if (videoResult.data?.video_url) {
+      videoUrl = videoResult.data.video_url;
+    } else if (videoResult.output?.video_url) {
+      videoUrl = videoResult.output.video_url;
+    } else if (videoResult.result?.video_url) {
+      videoUrl = videoResult.result.video_url;
+    } else if (Array.isArray(videoResult.data) && videoResult.data[0]?.url) {
+      videoUrl = videoResult.data[0].url;
+    } else if (videoResult.url) {
+      videoUrl = videoResult.url;
+    }
+    
+    console.log("Extracted video URL:", videoUrl);
     const thumbnailUrl = sourceImages[0]; // Use first image as thumbnail
 
     // Update video record

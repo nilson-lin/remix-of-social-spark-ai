@@ -20,8 +20,10 @@ import {
   Video,
   Play,
   Pause,
-  Loader2
+  Loader2,
+  Trash2
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Creative = Tables<'creatives'>;
@@ -30,11 +32,13 @@ type VideoRecord = Tables<'videos'>;
 export default function Dashboard() {
   const { user, profile, isAdmin, loading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [creatives, setCreatives] = useState<Creative[]>([]);
   const [videos, setVideos] = useState<VideoRecord[]>([]);
   const [loadingCreatives, setLoadingCreatives] = useState(true);
   const [loadingVideos, setLoadingVideos] = useState(true);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
   useEffect(() => {
@@ -97,6 +101,35 @@ export default function Dashboard() {
       }
       videoEl.play();
       setPlayingVideoId(videoId);
+    }
+  };
+
+  const deleteVideo = async (videoId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
+    
+    setDeletingVideoId(videoId);
+    try {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', videoId);
+
+      if (error) throw error;
+
+      setVideos(prev => prev.filter(v => v.id !== videoId));
+      toast({
+        title: 'Vídeo excluído',
+        description: 'O vídeo foi removido com sucesso.',
+      });
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toast({
+        title: 'Erro ao excluir',
+        description: 'Não foi possível excluir o vídeo.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingVideoId(null);
     }
   };
 
@@ -396,7 +429,21 @@ export default function Dashboard() {
                     )}
                   </div>
                   
-                  <h3 className="font-medium truncate mb-1">{video.title}</h3>
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-medium truncate flex-1">{video.title}</h3>
+                    <button
+                      onClick={() => deleteVideo(video.id)}
+                      disabled={deletingVideoId === video.id}
+                      className="ml-2 p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      title="Excluir vídeo"
+                    >
+                      {deletingVideoId === video.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>{getPlatformLabel(video.platform || '')}</span>
                     <span>•</span>
