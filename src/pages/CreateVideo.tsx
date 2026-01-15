@@ -231,18 +231,6 @@ export default function CreateVideo() {
 
       if (insertError) throw insertError;
 
-      // Deduct credits (skip for admins)
-      if (!isAdmin) {
-        const { error: creditError } = await supabase
-          .from('profiles')
-          .update({ credits: profile!.credits - 2 })
-          .eq('id', user!.id);
-
-        if (creditError) {
-          console.error('Error deducting credits:', creditError);
-        }
-      }
-
       // Call edge function
       const { error: generateError } = await supabase.functions.invoke('generate-video', {
         body: {
@@ -263,6 +251,18 @@ export default function CreateVideo() {
           .update({ status: 'failed' })
           .eq('id', video.id);
         throw generateError;
+      }
+
+      // Deduct credits (skip for admins)
+      if (!isAdmin) {
+        const { error: creditError } = await supabase
+          .from('profiles')
+          .update({ credits: profile!.credits - 2 })
+          .eq('id', user!.id);
+
+        if (creditError) {
+          console.error('Error deducting credits:', creditError);
+        }
       }
 
       toast({

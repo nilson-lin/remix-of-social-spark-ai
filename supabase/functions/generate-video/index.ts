@@ -12,8 +12,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let requestVideoId: string | undefined;
+
   try {
-    const { videoId, title, description, sourceImages, duration, aspectRatio, platform, style } = await req.json();
+    const body = await req.json();
+    const { videoId, title, description, sourceImages, duration, aspectRatio, platform, style } = body ?? {};
+    requestVideoId = videoId;
+
+    if (!videoId) throw new Error("Missing videoId");
+    if (!title) throw new Error("Missing title");
+    if (!Array.isArray(sourceImages) || sourceImages.length === 0) throw new Error("Missing sourceImages");
 
     console.log("Generate video request:", { videoId, title, platform, duration, aspectRatio, style });
     console.log("Source images:", sourceImages);
@@ -28,63 +36,67 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Build prompt for video generation
-    const prompt = buildVideoPrompt(title, description, platform, aspectRatio, style || 'cinematic');
+    const prompt = buildVideoPrompt(title, description ?? "", platform ?? "reels", aspectRatio ?? "9:16", style || "cinematic");
     console.log("Video prompt:", prompt);
 
     // Use the first image as the starting frame
     const startingImage = sourceImages[0];
-    
+
     // Generate video using Lovable AI with image-to-video
     console.log("Calling Lovable AI for video generation...");
-    
-    const videoResponse = await fetch("https://ai.gateway.lovable.dev/v1/video/generations", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: prompt,
+
+    let videoResult = await callGatewayVideoGeneration(
+      {
+        prompt,
         starting_frame: startingImage,
-        duration: duration,
+        duration,
         aspect_ratio: aspectRatio,
         resolution: "1080p",
-      }),
-    });
+      },
+      LOVABLE_API_KEY,
+    );
 
-    if (!videoResponse.ok) {
-      const errorText = await videoResponse.text();
-      console.error("Video generation error:", videoResponse.status, errorText);
-      
-      if (videoResponse.status === 429) {
-        throw new Error("Rate limit exceeded. Please try again later.");
-      }
-      if (videoResponse.status === 402) {
-        throw new Error("Insufficient credits. Please add credits to continue.");
-      }
-      
-      throw new Error(`Video generation failed: ${errorText}`);
-    }
-
-    const videoResult = await videoResponse.json();
     console.log("Video generation result:", JSON.stringify(videoResult).substring(0, 500));
 
-    // Extract video URL from response - handle multiple response formats
-    let videoUrl = null;
-    if (videoResult.video_url) {
-      videoUrl = videoResult.video_url;
-    } else if (videoResult.data?.video_url) {
-      videoUrl = videoResult.data.video_url;
-    } else if (videoResult.output?.video_url) {
-      videoUrl = videoResult.output.video_url;
-    } else if (videoResult.result?.video_url) {
-      videoUrl = videoResult.result.video_url;
-    } else if (Array.isArray(videoResult.data) && videoResult.data[0]?.url) {
-      videoUrl = videoResult.data[0].url;
-    } else if (videoResult.url) {
-      videoUrl = videoResult.url;
+    // If gateway returns a chat completion, retry with an explicit video model (if available)
+    if (videoResult?.object === "chat.completion") {
+      console.warn("Video endpoint returned chat.completion (likely wrong routing). Trying to auto-select a video model and retry...");
+      const modelId = await pickVideoModelId(LOVABLE_API_KEY);
+      if (modelId) {
+        console.log("Retrying video generation with model:", modelId);
+        videoResult = await callGatewayVideoGeneration(
+          {
+            model: modelId,
+            prompt,
+            starting_frame: startingImage,
+            duration,
+            aspect_ratio: aspectRatio,
+            resolution: "1080p",
+          },
+          LOVABLE_API_KEY,
+        );
+        console.log("Video generation retry result:", JSON.stringify(videoResult).substring(0, 500));
+      }
     }
-    
+
+    // Extract video URL from response - handle multiple response formats
+    let videoUrl = extractVideoUrl(videoResult);
+
+    // If we got a generation id but no URL, try polling the job (best-effort)
+    if (!videoUrl && typeof videoResult?.id === "string" && videoResult?.object !== "chat.completion") {
+      console.log("No video URL in initial response, polling generation id:", videoResult.id);
+      videoUrl = await pollGatewayForVideoUrl(videoResult.id, LOVABLE_API_KEY, 90_000);
+    }
+
+    // If still null, consider this a failure (so the UI can show a proper error)
+    if (!videoUrl) {
+      const maybeText = extractGatewayText(videoResult);
+      if (maybeText) {
+        console.warn("Gateway returned text instead of a video URL:", maybeText.substring(0, 200));
+      }
+      throw new Error("Falha ao gerar vídeo: não foi possível obter a URL do vídeo gerado.");
+    }
+
     console.log("Extracted video URL:", videoUrl);
     const thumbnailUrl = sourceImages[0]; // Use first image as thumbnail
 
@@ -94,7 +106,7 @@ serve(async (req) => {
       .update({
         video_url: videoUrl,
         thumbnail_url: thumbnailUrl,
-        status: videoUrl ? "completed" : "failed",
+        status: "completed",
         updated_at: new Date().toISOString(),
       })
       .eq("id", videoId);
@@ -114,10 +126,25 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   } catch (error) {
     console.error("Error in generate-video function:", error);
+
+    // Best-effort: mark the video as failed if we know the id
+    try {
+      if (requestVideoId) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        await supabase
+          .from("videos")
+          .update({ status: "failed", updated_at: new Date().toISOString() })
+          .eq("id", requestVideoId);
+      }
+    } catch (updateFail) {
+      console.error("Failed to mark video as failed:", updateFail);
+    }
 
     return new Response(
       JSON.stringify({
@@ -126,7 +153,7 @@ serve(async (req) => {
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      },
     );
   }
 });
