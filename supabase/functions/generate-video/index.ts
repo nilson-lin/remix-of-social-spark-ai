@@ -6,6 +6,140 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const GATEWAY_URL = "https://ai.gateway.lovable.dev";
+
+// Helper function to call the Lovable AI Gateway for video generation
+async function callGatewayVideoGeneration(
+  params: {
+    model?: string;
+    prompt: string;
+    starting_frame?: string;
+    duration?: number;
+    aspect_ratio?: string;
+    resolution?: string;
+  },
+  apiKey: string
+): Promise<any> {
+  const response = await fetch(`${GATEWAY_URL}/v1/video/generations`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: params.model || "minimax/video-01",
+      prompt: params.prompt,
+      first_frame_image: params.starting_frame,
+      // duration and aspect_ratio may not be supported by all models
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Gateway error response:", errorText);
+    throw new Error(`Gateway error: ${response.status} - ${errorText}`);
+  }
+
+  return await response.json();
+}
+
+// Try to pick a video model from available models
+async function pickVideoModelId(apiKey: string): Promise<string | null> {
+  try {
+    const response = await fetch(`${GATEWAY_URL}/v1/models`, {
+      headers: { "Authorization": `Bearer ${apiKey}` },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    const models = data?.data || [];
+    // Look for video-capable models
+    const videoModel = models.find((m: any) => 
+      m.id?.includes("video") || m.id?.includes("minimax")
+    );
+    return videoModel?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+// Extract video URL from various response formats
+function extractVideoUrl(result: any): string | null {
+  if (!result) return null;
+  
+  // Direct video URL
+  if (typeof result.video_url === "string") return result.video_url;
+  if (typeof result.url === "string") return result.url;
+  
+  // Nested in data array
+  if (Array.isArray(result.data) && result.data[0]) {
+    const first = result.data[0];
+    if (typeof first.url === "string") return first.url;
+    if (typeof first.video_url === "string") return first.video_url;
+    if (typeof first.video === "string") return first.video;
+  }
+  
+  // Nested in video object
+  if (result.video && typeof result.video.url === "string") return result.video.url;
+  
+  // Output field
+  if (typeof result.output === "string" && result.output.startsWith("http")) return result.output;
+  
+  return null;
+}
+
+// Poll the gateway for video URL (for async generation)
+async function pollGatewayForVideoUrl(
+  generationId: string,
+  apiKey: string,
+  timeoutMs: number
+): Promise<string | null> {
+  const startTime = Date.now();
+  const pollInterval = 5000; // 5 seconds
+  
+  while (Date.now() - startTime < timeoutMs) {
+    try {
+      const response = await fetch(`${GATEWAY_URL}/v1/video/generations/${generationId}`, {
+        headers: { "Authorization": `Bearer ${apiKey}` },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        const url = extractVideoUrl(result);
+        if (url) return url;
+        
+        // Check if failed
+        if (result.status === "failed" || result.error) {
+          console.error("Video generation failed:", result.error);
+          return null;
+        }
+      }
+    } catch (e) {
+      console.error("Polling error:", e);
+    }
+    
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, pollInterval));
+  }
+  
+  return null;
+}
+
+// Extract text from gateway response (for error messages)
+function extractGatewayText(result: any): string | null {
+  if (!result) return null;
+  
+  // Chat completion format
+  if (result.choices?.[0]?.message?.content) {
+    return result.choices[0].message.content;
+  }
+  
+  // Direct text
+  if (typeof result.text === "string") return result.text;
+  if (typeof result.message === "string") return result.message;
+  
+  return null;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
