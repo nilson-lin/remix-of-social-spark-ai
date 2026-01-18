@@ -13,6 +13,7 @@ import CreateCreative from "./pages/CreateCreative";
 import CreateVideo from "./pages/CreateVideo";
 import CreativeDetail from "./pages/CreativeDetail";
 import History from "./pages/History";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,8 +34,9 @@ const App = () => (
               <Route path="/create" element={<CreateCreative />} />
               <Route path="/create-video" element={<CreateVideo />} />
               <Route path="/creative/:id" element={<CreativeDetail />} />
-              <Route path="/history" element={<History />} />
-              <Route path="*" element={<NotFound />} />
+            <Route path="/history" element={<History />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>

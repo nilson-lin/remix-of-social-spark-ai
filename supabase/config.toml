@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.generate-video]
 verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.add-credits]
+verify_jwt = false

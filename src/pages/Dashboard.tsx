@@ -21,9 +21,11 @@ import {
   Play,
   Pause,
   Loader2,
-  Trash2
+  Trash2,
+  CreditCard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PricingModal } from '@/components/PricingModal';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Creative = Tables<'creatives'>;
@@ -39,6 +41,7 @@ export default function Dashboard() {
   const [loadingVideos, setLoadingVideos] = useState(true);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
+  const [showPricingModal, setShowPricingModal] = useState(false);
   const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
   useEffect(() => {
@@ -212,10 +215,14 @@ export default function Dashboard() {
             </Link>
 
             <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
+              <button 
+                onClick={() => setShowPricingModal(true)}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+              >
                 <Zap className="w-4 h-4 text-primary" />
                 <span className="text-sm font-medium">{profile?.credits ?? 0} créditos</span>
-              </div>
+                <CreditCard className="w-4 h-4 text-muted-foreground" />
+              </button>
               
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isAdmin ? 'bg-destructive/20' : 'bg-primary/20'}`}>
@@ -547,6 +554,8 @@ export default function Dashboard() {
           )}
         </motion.div>
       </main>
+
+      <PricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
     </div>
   );
 }

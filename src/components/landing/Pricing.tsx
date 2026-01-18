@@ -1,37 +1,38 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Check, Sparkles, Zap, Building2 } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+
 const plans = [{
   name: 'Gratuito',
   price: 'R$ 0',
-  period: '/mês',
-  description: 'Perfeito para testar a plataforma',
-  credits: '10 créditos/mês',
+  period: '',
+  description: 'Para experimentar a plataforma',
+  credits: '1 crédito grátis',
   icon: Zap,
-  features: ['10 criativos por mês', 'Texto + imagem', 'Todas as redes sociais', 'Histórico de 30 dias', '3 variações de copy'],
+  features: ['1 criativo para testar', 'Texto + imagem', 'Todas as redes sociais', 'Acesso básico'],
   cta: 'Começar grátis',
   highlighted: false
 }, {
-  name: 'Pro',
-  price: 'R$ 67',
-  period: '/mês',
-  description: 'Para profissionais e criadores',
-  credits: '150 créditos/mês',
+  name: 'Inicial',
+  price: 'R$ 9,90',
+  period: '',
+  description: 'Perfeito para começar',
+  credits: '10 créditos',
   icon: Sparkles,
-  features: ['150 criativos por mês', 'Texto + imagem + vídeo', 'Todas as redes sociais', 'Histórico ilimitado', '3 variações de copy', 'Upload de referência', 'Enhancement de imagem', 'Suporte prioritário'],
-  cta: 'Assinar Pro',
-  highlighted: true
-}, {
-  name: 'Agência',
-  price: 'R$ 197',
-  period: '/mês',
-  description: 'Para equipes e agências',
-  credits: '500 créditos/mês',
-  icon: Building2,
-  features: ['500 criativos por mês', 'Texto + imagem + vídeo', 'Todas as redes sociais', 'Histórico ilimitado', '3 variações de copy', 'Upload de referência', 'Enhancement de imagem', 'Suporte VIP 24/7', 'API access', 'White label', 'Múltiplos usuários'],
-  cta: 'Falar com vendas',
+  features: ['10 créditos', 'Geração de criativos', 'Texto + imagem', 'Todas as redes sociais', 'Suporte por email'],
+  cta: 'Comprar créditos',
   highlighted: false
+}, {
+  name: 'Pro',
+  price: 'R$ 24,90',
+  period: '',
+  description: 'Para profissionais',
+  credits: '30 créditos',
+  icon: Crown,
+  features: ['30 créditos', 'Geração de criativos e vídeos', 'Texto + imagem + vídeo', 'Todas as redes sociais', 'Suporte prioritário'],
+  cta: 'Comprar Pro',
+  highlighted: true
 }];
 export function Pricing() {
   return <section className="py-24 px-4" id="pricing">
