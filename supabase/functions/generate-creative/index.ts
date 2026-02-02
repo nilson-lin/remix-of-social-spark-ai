@@ -120,37 +120,60 @@ Responda usando a função fornecida.`;
 
     // Generate image with AI
     const styleLabels: Record<string, string> = {
-      minimalist: "minimalista, clean, espaço em branco, tipografia elegante",
-      advertising: "publicitário, vibrante, chamativo, cores fortes",
-      realistic: "fotorealista, alta qualidade, profissional",
-      modern: "moderno, futurista, gradientes, design contemporâneo",
+      minimalist: "minimalist, clean, white space, elegant typography, simple composition",
+      advertising: "advertising, vibrant, eye-catching, bold colors, dynamic",
+      realistic: "photorealistic, high quality, professional photography",
+      modern: "modern, futuristic, gradients, contemporary design, sleek",
     };
 
-    const imagePrompt = `Create a professional ${styleLabels[style] || style} advertising image for ${social_network}. 
-Product: ${product}. Niche: ${niche}. 
-Style: ${styleLabels[style] || style}.
-The image should be suitable for social media marketing, high quality, 1:1 aspect ratio.
-Do not include any text in the image.`;
+    const styleDescription = styleLabels[style] || "professional, high quality";
+    
+    const imagePrompt = `Create a stunning ${styleDescription} social media advertisement image.
 
-    const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: imagePrompt }],
-        modalities: ["image", "text"],
-      }),
-    });
+Subject: ${product}
+Industry: ${niche}
+Platform: ${social_network}
+
+Requirements:
+- Ultra high resolution, professional quality
+- Perfect for ${social_network} ads
+- 1:1 square aspect ratio
+- No text or words in the image
+- Clean, visually appealing composition
+- ${styleDescription} aesthetic`;
+
+    console.log("Generating image with prompt:", imagePrompt);
 
     let imageUrl = null;
-    if (imageResponse.ok) {
-      const imageData = await imageResponse.json();
-      imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    } else {
-      console.error("Image generation failed:", await imageResponse.text());
+    try {
+      const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image",
+          messages: [{ role: "user", content: imagePrompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (imageResponse.ok) {
+        const imageData = await imageResponse.json();
+        console.log("Image response received, extracting URL...");
+        imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        if (imageUrl) {
+          console.log("Image URL obtained, length:", imageUrl.length);
+        } else {
+          console.error("Image URL not found in response:", JSON.stringify(imageData).substring(0, 500));
+        }
+      } else {
+        const errorText = await imageResponse.text();
+        console.error("Image generation failed:", imageResponse.status, errorText);
+      }
+    } catch (imageError) {
+      console.error("Image generation error:", imageError);
     }
 
     // Update the creative in database
