@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildImagePrompt, buildCopyPrompt } from "./prompt-builder.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { creativeId, niche, product, objective, social_network, tone, style } = await req.json();
+    const { creativeId, niche, product, objective, social_network, tone, style, creative_type, template } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -24,42 +25,17 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Generate copy with AI
-    const objectiveLabels: Record<string, string> = {
-      sales: "vendas diretas",
-      leads: "captação de leads",
-      engagement: "engajamento e interação",
-      brand: "reconhecimento de marca",
-    };
+    // ========== GERAÇÃO DE COPY COM IA ==========
+    const copyPrompt = buildCopyPrompt({
+      niche,
+      product,
+      objective,
+      social_network,
+      tone,
+      creative_type: creative_type || "venda",
+    });
 
-    const toneLabels: Record<string, string> = {
-      professional: "profissional e corporativo",
-      informal: "informal e descontraído",
-      persuasive: "persuasivo e convincente",
-      creative: "criativo e inovador",
-    };
-
-    const networkLabels: Record<string, string> = {
-      instagram: "Instagram (feed/stories)",
-      facebook: "Facebook (anúncios)",
-      tiktok: "TikTok (vídeos curtos)",
-      google_ads: "Google Ads (pesquisa/display)",
-    };
-
-    const copyPrompt = `Você é um copywriter especialista em marketing digital e redes sociais. Crie um criativo completo para a seguinte campanha:
-
-Nicho: ${niche}
-Produto/Serviço: ${product}
-Objetivo: ${objectiveLabels[objective] || objective}
-Rede Social: ${networkLabels[social_network] || social_network}
-Tom: ${toneLabels[tone] || tone}
-
-Gere exatamente 3 variações diferentes de copy, cada uma com:
-1. Headline (título chamativo, máximo 10 palavras)
-2. Texto principal (copy persuasiva, 50-100 palavras)
-3. CTA (chamada para ação, máximo 5 palavras)
-
-Responda usando a função fornecida.`;
+    console.log("Generating copy with AI...");
 
     const copyResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -117,32 +93,21 @@ Responda usando a função fornecida.`;
     }
 
     const mainVariation = variations[0] || { headline: product, text: "", cta: "Saiba mais" };
+    console.log("Copy generated successfully, variations:", variations.length);
 
-    // Generate image with AI
-    const styleLabels: Record<string, string> = {
-      minimalist: "minimalist, clean, white space, elegant typography, simple composition",
-      advertising: "advertising, vibrant, eye-catching, bold colors, dynamic",
-      realistic: "photorealistic, high quality, professional photography",
-      modern: "modern, futuristic, gradients, contemporary design, sleek",
-    };
+    // ========== GERAÇÃO DE IMAGEM COM IA ==========
+    const imagePrompt = buildImagePrompt({
+      niche,
+      product,
+      template: template || style || "minimalista",
+      creative_type: creative_type || "venda",
+      social_network,
+      objective,
+      tone,
+    });
 
-    const styleDescription = styleLabels[style] || "professional, high quality";
-    
-    const imagePrompt = `Create a stunning ${styleDescription} social media advertisement image.
-
-Subject: ${product}
-Industry: ${niche}
-Platform: ${social_network}
-
-Requirements:
-- Ultra high resolution, professional quality
-- Perfect for ${social_network} ads
-- 1:1 square aspect ratio
-- No text or words in the image
-- Clean, visually appealing composition
-- ${styleDescription} aesthetic`;
-
-    console.log("Generating image with prompt:", imagePrompt);
+    console.log("Generating image with modular prompt...");
+    console.log("Image prompt preview:", imagePrompt.substring(0, 300) + "...");
 
     let imageUrl = null;
     try {
@@ -161,12 +126,15 @@ Requirements:
 
       if (imageResponse.ok) {
         const imageData = await imageResponse.json();
-        console.log("Image response received, extracting URL...");
+        console.log("Image response received");
+        
+        // Extrai URL da imagem
         imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        
         if (imageUrl) {
-          console.log("Image URL obtained, length:", imageUrl.length);
+          console.log("Image URL obtained successfully, length:", imageUrl.length);
         } else {
-          console.error("Image URL not found in response:", JSON.stringify(imageData).substring(0, 500));
+          console.error("Image URL not found. Response structure:", JSON.stringify(imageData).substring(0, 800));
         }
       } else {
         const errorText = await imageResponse.text();
@@ -176,7 +144,7 @@ Requirements:
       console.error("Image generation error:", imageError);
     }
 
-    // Update the creative in database
+    // ========== ATUALIZA CRIATIVO NO BANCO ==========
     const { error: updateError } = await supabase
       .from("creatives")
       .update({
@@ -193,6 +161,8 @@ Requirements:
       console.error("Database update error:", updateError);
       throw updateError;
     }
+
+    console.log("Creative generation completed successfully");
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
