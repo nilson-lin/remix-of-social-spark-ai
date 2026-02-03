@@ -95,7 +95,7 @@ export default function CreateCreative() {
       return;
     }
 
-    // Check credits (skip for admins)
+    // Client-side credit check (server will verify and deduct)
     if (!isAdmin && (!profile || profile.credits < 1)) {
       toast({
         title: 'Créditos insuficientes',
@@ -126,18 +126,7 @@ export default function CreateCreative() {
 
       if (insertError) throw insertError;
 
-      // Deduct credit (skip for admins)
-      if (!isAdmin) {
-        const { error: creditError } = await supabase
-          .from('profiles')
-          .update({ credits: profile!.credits - 1 })
-          .eq('id', user!.id);
-
-        if (creditError) {
-          console.error('Error deducting credit:', creditError);
-        }
-      }
-
+      // Credits are now deducted server-side in the edge function
       // Call the generate edge function with new fields
       const { data: result, error: generateError } = await supabase.functions.invoke('generate-creative', {
         body: { 
