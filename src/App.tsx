@@ -10,7 +10,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import CreateCreative from "./pages/CreateCreative";
-import CreateVideo from "./pages/CreateVideo";
+
 import CreativeDetail from "./pages/CreativeDetail";
 import History from "./pages/History";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -32,7 +32,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/create" element={<CreateCreative />} />
-              <Route path="/create-video" element={<CreateVideo />} />
+              
               <Route path="/creative/:id" element={<CreativeDetail />} />
             <Route path="/history" element={<History />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
