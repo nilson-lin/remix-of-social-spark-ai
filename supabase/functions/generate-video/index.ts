@@ -17,7 +17,7 @@ const VideoInputSchema = z.object({
   sourceImages: z.array(z.string().url()).min(1).max(3),
   platform: z.enum(['reels', 'tiktok', 'youtube_shorts', 'feed', 'landscape']).optional().default('reels'),
   style: z.enum(['cinematic', 'energetic', 'calm', 'professional', 'playful', 'dramatic']).optional().default('cinematic'),
-  duration: z.number().int().min(5).max(15).optional().default(8),
+  duration: z.enum(['4', '6', '8']).optional().default('8').transform(val => parseInt(val, 10)),
   aspectRatio: z.string().optional(),
 });
 
