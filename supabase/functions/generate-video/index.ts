@@ -6,95 +6,87 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev";
+const POLLO_API_URL = "https://pollo.ai/api/platform/generation/google/veo3-fast";
 
-// Generate an enhanced image using the Lovable AI Gateway image generation model
-async function generateEnhancedImage(
-  prompt: string,
-  sourceImageUrl: string,
-  apiKey: string
-): Promise<string | null> {
-  console.log("Generating enhanced image with prompt:", prompt.substring(0, 200));
-  
-  const response = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash-image",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: prompt
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: sourceImageUrl
-              }
-            }
-          ]
-        }
-      ],
-      modalities: ["image", "text"]
-    }),
-  });
+// Build video prompt based on style and content
+function buildVideoPrompt(title: string, description: string, style: string): string {
+  const styleDescriptions: Record<string, string> = {
+    cinematic: "Cinematic video with dramatic lighting, smooth camera movements, film-like color grading, and professional Hollywood-style composition. Rich contrast and depth.",
+    energetic: "Dynamic and vibrant video with fast-paced energy, saturated colors, quick transitions, and exciting movement. High energy atmosphere.",
+    calm: "Peaceful and zen-like video with slow, gentle movements, soft pastel colors, smooth transitions, and meditative atmosphere.",
+    professional: "Clean and polished corporate video with sleek modern aesthetics, professional lighting, and sophisticated business-appropriate style.",
+    playful: "Fun and engaging video with bright cheerful colors, bouncy movements, playful animations, and joyful celebratory atmosphere.",
+    dramatic: "Epic and impactful video with high contrast, moody lighting, intense movements, and blockbuster movie style visuals.",
+  };
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Gateway error response:", errorText);
-    throw new Error(`Gateway error: ${response.status} - ${errorText}`);
-  }
-
-  const result = await response.json();
-  console.log("Image generation result keys:", Object.keys(result));
+  const styleDesc = styleDescriptions[style] || styleDescriptions.cinematic;
   
-  // Extract image URL from response
-  const imageUrl = result.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  
-  if (imageUrl) {
-    console.log("Got base64 image, length:", imageUrl.length);
-    return imageUrl;
-  }
-  
-  return null;
+  return `Create a stunning social media video for: "${title}". ${description ? `Context: ${description}.` : ''} Style: ${styleDesc}. Make it scroll-stopping, visually captivating, and perfect for social media engagement. Smooth camera motion, professional quality.`;
 }
 
-// Upload base64 image to Supabase storage and return public URL
-async function uploadBase64ToStorage(
-  supabase: any,
-  base64Data: string,
-  videoId: string
-): Promise<string> {
-  // Extract the actual base64 content
-  const base64Content = base64Data.replace(/^data:image\/\w+;base64,/, '');
-  const imageBuffer = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+// Get aspect ratio config based on platform
+function getAspectRatioConfig(platform: string): { aspectRatio: string; resolution: string } {
+  const configs: Record<string, { aspectRatio: string; resolution: string }> = {
+    reels: { aspectRatio: "9:16", resolution: "720p" },
+    tiktok: { aspectRatio: "9:16", resolution: "720p" },
+    stories: { aspectRatio: "9:16", resolution: "720p" },
+    youtube: { aspectRatio: "16:9", resolution: "720p" },
+    feed: { aspectRatio: "1:1", resolution: "720p" },
+  };
   
-  const fileName = `${videoId}/generated-${Date.now()}.png`;
+  return configs[platform] || configs.reels;
+}
+
+// Poll for video generation status
+async function pollForCompletion(
+  generationId: string,
+  apiKey: string,
+  maxAttempts: number = 60,
+  intervalMs: number = 5000
+): Promise<{ videoUrl: string; thumbnailUrl?: string } | null> {
+  console.log(`Polling for generation ${generationId}...`);
   
-  const { data, error } = await supabase.storage
-    .from('video-uploads')
-    .upload(fileName, imageBuffer, {
-      contentType: 'image/png',
-      upsert: true
-    });
-  
-  if (error) {
-    console.error("Storage upload error:", error);
-    throw error;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const response = await fetch(`https://pollo.ai/api/platform/generation/${generationId}`, {
+        method: "GET",
+        headers: {
+          "x-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        console.error(`Poll attempt ${attempt + 1} failed:`, response.status);
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+        continue;
+      }
+
+      const result = await response.json();
+      console.log(`Poll attempt ${attempt + 1}, status:`, result.status);
+
+      if (result.status === "completed" && result.output?.videoUrl) {
+        return {
+          videoUrl: result.output.videoUrl,
+          thumbnailUrl: result.output.thumbnailUrl || result.output.videoUrl,
+        };
+      }
+
+      if (result.status === "failed") {
+        console.error("Video generation failed:", result.error);
+        return null;
+      }
+
+      // Still processing, wait and try again
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    } catch (error) {
+      console.error(`Poll attempt ${attempt + 1} error:`, error);
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
   }
-  
-  // Get public URL
-  const { data: publicUrlData } = supabase.storage
-    .from('video-uploads')
-    .getPublicUrl(fileName);
-  
-  return publicUrlData.publicUrl;
+
+  console.error("Polling timed out");
+  return null;
 }
 
 serve(async (req) => {
@@ -117,44 +109,89 @@ serve(async (req) => {
     console.log("Generate video request:", { videoId, title, platform, style });
     console.log("Source images:", sourceImages);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const POLLO_API_KEY = Deno.env.get("POLLO_API_KEY");
+    if (!POLLO_API_KEY) {
+      throw new Error("POLLO_API_KEY is not configured");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Build prompt for image enhancement/generation
-    const prompt = buildImagePrompt(title, description ?? "", platform ?? "reels", style || "cinematic");
-    console.log("Image prompt:", prompt);
+    // Build prompt for video generation
+    const prompt = buildVideoPrompt(title, description ?? "", style || "cinematic");
+    const { aspectRatio, resolution } = getAspectRatioConfig(platform ?? "reels");
+    
+    console.log("Video prompt:", prompt);
+    console.log("Aspect ratio:", aspectRatio, "Resolution:", resolution);
 
-    // Use the first image as the source
+    // Use the first image as the source for image-to-video
     const sourceImage = sourceImages[0];
 
-    // Generate enhanced image using Lovable AI
-    console.log("Calling Lovable AI for image generation...");
+    // Call Pollo.ai Veo3 API
+    console.log("Calling Pollo.ai Veo3 API...");
 
-    const generatedImageData = await generateEnhancedImage(prompt, sourceImage, LOVABLE_API_KEY);
+    const polloResponse = await fetch(POLLO_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": POLLO_API_KEY,
+      },
+      body: JSON.stringify({
+        input: {
+          image: sourceImage,
+          prompt: prompt,
+          negativePrompt: "blurry, low quality, distorted, ugly, bad composition, amateur, watermark, text overlay",
+          length: 8,
+          aspectRatio: aspectRatio,
+          resolution: resolution,
+          generateAudio: false,
+        },
+      }),
+    });
 
-    if (!generatedImageData) {
-      throw new Error("Falha ao gerar imagem: não foi possível obter a imagem gerada.");
+    if (!polloResponse.ok) {
+      const errorText = await polloResponse.text();
+      console.error("Pollo.ai API error:", polloResponse.status, errorText);
+      throw new Error(`Pollo.ai API error: ${polloResponse.status} - ${errorText}`);
     }
 
-    // Upload the generated image to storage
-    console.log("Uploading generated image to storage...");
-    const imageUrl = await uploadBase64ToStorage(supabase, generatedImageData, videoId);
-    
-    console.log("Generated image URL:", imageUrl);
-    const thumbnailUrl = sourceImages[0];
+    const polloResult = await polloResponse.json();
+    console.log("Pollo.ai response:", JSON.stringify(polloResult).substring(0, 500));
 
-    // Update video record with the generated image as the "video" URL
-    // Note: Since true video generation is not available, we generate an enhanced image
+    // Check if we got an immediate result or need to poll
+    let videoUrl: string | null = null;
+    let thumbnailUrl: string | null = sourceImages[0];
+
+    if (polloResult.output?.videoUrl) {
+      // Immediate result
+      videoUrl = polloResult.output.videoUrl;
+      thumbnailUrl = polloResult.output.thumbnailUrl || sourceImages[0];
+      console.log("Got immediate video URL:", videoUrl);
+    } else if (polloResult.id || polloResult.generationId) {
+      // Need to poll for result
+      const generationId = polloResult.id || polloResult.generationId;
+      console.log("Got generation ID, polling for result:", generationId);
+      
+      const pollResult = await pollForCompletion(generationId, POLLO_API_KEY);
+      
+      if (pollResult) {
+        videoUrl = pollResult.videoUrl;
+        thumbnailUrl = pollResult.thumbnailUrl || sourceImages[0];
+      }
+    }
+
+    if (!videoUrl) {
+      throw new Error("Failed to generate video: no video URL returned");
+    }
+
+    console.log("Final video URL:", videoUrl);
+
+    // Update video record with the generated video URL
     const { error: updateError } = await supabase
       .from("videos")
       .update({
-        video_url: imageUrl,
+        video_url: videoUrl,
         thumbnail_url: thumbnailUrl,
         status: "completed",
         updated_at: new Date().toISOString(),
@@ -166,14 +203,14 @@ serve(async (req) => {
       throw updateError;
     }
 
-    console.log("Image generation completed successfully");
+    console.log("Video generation completed successfully");
 
     return new Response(
       JSON.stringify({
         success: true,
         videoId,
-        videoUrl: imageUrl,
-        note: "Imagem aprimorada gerada com sucesso. Geração de vídeo verdadeira não está disponível no momento."
+        videoUrl,
+        thumbnailUrl,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -208,30 +245,3 @@ serve(async (req) => {
     );
   }
 });
-
-function buildImagePrompt(title: string, description: string, platform: string, style: string): string {
-  const styleDescriptions: Record<string, string> = {
-    cinematic: "Transform this into a cinematic masterpiece with dramatic lighting, rich colors, film-like color grading, and professional Hollywood-style composition",
-    energetic: "Make this vibrant and dynamic with saturated colors, high contrast, and an exciting, attention-grabbing look",
-    calm: "Create a peaceful, zen-like atmosphere with soft dreamy colors, gentle lighting, and a meditative feel",
-    professional: "Enhance this with clean, sleek corporate styling, modern color grading, and sophisticated business-appropriate aesthetics",
-    playful: "Make this fun and engaging with bright cheerful colors, playful composition, and joyful celebratory atmosphere",
-    dramatic: "Create an epic impactful look with high contrast, moody color grading, and blockbuster movie poster style",
-  };
-
-  const styleDesc = styleDescriptions[style] || styleDescriptions.cinematic;
-  
-  let prompt = `${styleDesc}.
-
-Create a stunning, scroll-stopping visual for "${title}".
-${description ? `Context: ${description}` : ''}
-
-Requirements:
-- Ultra high quality with crisp details
-- Perfect exposure and professional lighting
-- Optimized for ${platform} social media
-- Make it premium, polished and engaging
-- Keep the main subject clearly visible`;
-  
-  return prompt;
-}
