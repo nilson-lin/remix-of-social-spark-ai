@@ -118,6 +118,10 @@ serve(async (req) => {
   }
 
   let requestVideoId: string | undefined;
+  let requestUserId: string | undefined;
+  let creditsDeducted = false;
+  let videoGenerated = false;
+  let errorCode: string | undefined;
 
   try {
     // === AUTHENTICATION ===
@@ -145,6 +149,7 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
+    requestUserId = userId;
     console.log("Authenticated user:", userId);
 
     // === INPUT VALIDATION ===
@@ -216,6 +221,8 @@ serve(async (req) => {
       );
     }
 
+    creditsDeducted = true;
+
     console.log("Credits verified and deducted (2 credits)");
 
     // Build prompt for video generation
@@ -256,6 +263,7 @@ serve(async (req) => {
       
       // Check for specific error types
       if (errorText.includes("Not enough credits")) {
+        errorCode = 'UPSTREAM_CREDITS_EXHAUSTED';
         throw new Error("Video API credits exhausted. Please contact support.");
       }
       
@@ -288,6 +296,8 @@ serve(async (req) => {
     if (!videoUrl) {
       throw new Error("Failed to generate video: no video URL returned");
     }
+
+    videoGenerated = true;
 
     console.log("Final video URL obtained");
 
@@ -323,16 +333,32 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error in generate-video function:", error);
 
-    // Best-effort: mark the video as failed if we know the id
+    // Best-effort: mark the video as failed (and refund credits if we already deducted)
     try {
-      if (requestVideoId) {
+      if (requestVideoId || (creditsDeducted && !videoGenerated && requestUserId)) {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
-        await supabase
-          .from("videos")
-          .update({ status: "failed", updated_at: new Date().toISOString() })
-          .eq("id", requestVideoId);
+
+        if (requestVideoId) {
+          await supabase
+            .from("videos")
+            .update({ status: "failed", updated_at: new Date().toISOString() })
+            .eq("id", requestVideoId);
+        }
+
+        if (creditsDeducted && !videoGenerated && requestUserId) {
+          const { error: refundError } = await supabase.rpc("check_and_deduct_credits", {
+            _user_id: requestUserId,
+            _credit_cost: -2,
+          });
+
+          if (refundError) {
+            console.error("Failed to refund credits:", refundError);
+          } else {
+            console.log("Refunded credits (2 credits)");
+          }
+        }
       }
     } catch (updateFail) {
       console.error("Failed to mark video as failed:", updateFail);
@@ -341,9 +367,11 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Unknown error occurred",
+        code: errorCode,
+        success: false,
       }),
       {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
