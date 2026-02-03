@@ -39,9 +39,9 @@ const platforms = [
 ];
 
 const durations = [
-  { value: 5, label: '5 segundos' },
-  { value: 10, label: '10 segundos' },
-  { value: 15, label: '15 segundos' },
+  { value: '4', label: '4 segundos' },
+  { value: '6', label: '6 segundos' },
+  { value: '8', label: '8 segundos' },
 ];
 
 const videoStyles = [
@@ -69,7 +69,7 @@ export default function CreateVideo() {
     title: '',
     description: '',
     platform: 'reels',
-    duration: 5,
+    duration: '8',
     style: 'cinematic',
   });
   const [images, setImages] = useState<UploadedImage[]>([]);
@@ -224,7 +224,7 @@ export default function CreateVideo() {
           title: formData.title,
           description: formData.description,
           source_images: imageUrls,
-          duration: formData.duration,
+          duration: parseInt(formData.duration, 10),
           aspect_ratio: selectedPlatform?.aspectRatio || '9:16',
           platform: formData.platform,
           status: 'generating',
