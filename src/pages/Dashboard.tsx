@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,11 +17,6 @@ import {
   User,
   Crown,
   Shield,
-  Video,
-  Play,
-  Pause,
-  Loader2,
-  Trash2,
   CreditCard
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -29,20 +24,14 @@ import { PricingModal } from '@/components/PricingModal';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Creative = Tables<'creatives'>;
-type VideoRecord = Tables<'videos'>;
 
 export default function Dashboard() {
   const { user, profile, isAdmin, loading, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [creatives, setCreatives] = useState<Creative[]>([]);
-  const [videos, setVideos] = useState<VideoRecord[]>([]);
   const [loadingCreatives, setLoadingCreatives] = useState(true);
-  const [loadingVideos, setLoadingVideos] = useState(true);
-  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
-  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [showPricingModal, setShowPricingModal] = useState(false);
-  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
 
   useEffect(() => {
     if (!loading && !user) {
@@ -53,7 +42,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) {
       fetchCreatives();
-      fetchVideos();
       refreshProfile();
     }
   }, [user]);
@@ -72,68 +60,6 @@ export default function Dashboard() {
       setCreatives(data);
     }
     setLoadingCreatives(false);
-  };
-
-  const fetchVideos = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('videos')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (!error && data) {
-      setVideos(data);
-    }
-    setLoadingVideos(false);
-  };
-
-  const toggleVideoPlay = (videoId: string) => {
-    const videoEl = videoRefs.current[videoId];
-    if (!videoEl) return;
-
-    if (playingVideoId === videoId) {
-      videoEl.pause();
-      setPlayingVideoId(null);
-    } else {
-      // Pause any other playing video
-      if (playingVideoId && videoRefs.current[playingVideoId]) {
-        videoRefs.current[playingVideoId]?.pause();
-      }
-      videoEl.play();
-      setPlayingVideoId(videoId);
-    }
-  };
-
-  const deleteVideo = async (videoId: string) => {
-    if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
-    
-    setDeletingVideoId(videoId);
-    try {
-      const { error } = await supabase
-        .from('videos')
-        .delete()
-        .eq('id', videoId);
-
-      if (error) throw error;
-
-      setVideos(prev => prev.filter(v => v.id !== videoId));
-      toast({
-        title: 'Vídeo excluído',
-        description: 'O vídeo foi removido com sucesso.',
-      });
-    } catch (error) {
-      console.error('Error deleting video:', error);
-      toast({
-        title: 'Erro ao excluir',
-        description: 'Não foi possível excluir o vídeo.',
-        variant: 'destructive',
-      });
-    } finally {
-      setDeletingVideoId(null);
-    }
   };
 
   const handleSignOut = async () => {
@@ -178,17 +104,6 @@ export default function Dashboard() {
       brand: 'Marca',
     };
     return labels[objective] || objective;
-  };
-
-  const getPlatformLabel = (platform: string) => {
-    const labels: Record<string, string> = {
-      reels: 'Instagram Reels',
-      tiktok: 'TikTok',
-      youtube_shorts: 'YouTube Shorts',
-      feed: 'Feed Square',
-      landscape: 'Landscape',
-    };
-    return labels[platform] || platform;
   };
 
   const getNetworkLabel = (network: string) => {
@@ -297,15 +212,15 @@ export default function Dashboard() {
           ))}
         </motion.div>
 
-        {/* Create new options */}
+        {/* Create new creative */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4"
+          className="mb-8"
         >
           <Link to="/create">
-            <div className="glass-card p-8 border-dashed border-2 border-border hover:border-primary/50 transition-colors cursor-pointer group h-full">
+            <div className="glass-card p-8 border-dashed border-2 border-border hover:border-primary/50 transition-colors cursor-pointer group">
               <div className="flex flex-col items-center justify-center text-center">
                 <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <Plus className="w-8 h-8 text-primary" />
@@ -317,149 +232,6 @@ export default function Dashboard() {
               </div>
             </div>
           </Link>
-
-          <Link to="/create-video">
-            <div className="glass-card p-8 border-dashed border-2 border-border hover:border-pink-500/50 transition-colors cursor-pointer group h-full">
-              <div className="flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center mb-4 group-hover:from-pink-500/30 group-hover:to-orange-500/30 transition-colors">
-                  <Video className="w-8 h-8 text-pink-500" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Criar novo vídeo</h3>
-                <p className="text-muted-foreground max-w-md">
-                  Gere vídeos incríveis para Reels, TikTok e Shorts com IA.
-                </p>
-              </div>
-            </div>
-          </Link>
-        </motion.div>
-
-        {/* Recent Videos */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Video className="w-5 h-5 text-pink-500" />
-              Vídeos recentes
-            </h2>
-          </div>
-
-          {loadingVideos ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="glass-card p-4 animate-pulse">
-                  <div className="aspect-[9/16] rounded-lg bg-muted mb-3" />
-                  <div className="h-4 bg-muted rounded w-3/4 mb-2" />
-                  <div className="h-3 bg-muted rounded w-1/2" />
-                </div>
-              ))}
-            </div>
-          ) : videos.length === 0 ? (
-            <div className="glass-card p-12 text-center">
-              <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">Nenhum vídeo ainda</h3>
-              <p className="text-muted-foreground mb-4">
-                Comece criando seu primeiro vídeo com IA.
-              </p>
-              <Link to="/create-video">
-                <Button className="bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600">
-                  <Video className="w-4 h-4 mr-2" />
-                  Criar vídeo
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {videos.map((video) => (
-                <div key={video.id} className="glass-card p-4 hover:border-pink-500/50 transition-colors">
-                  <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-muted mb-3">
-                    {video.status === 'completed' && video.video_url ? (
-                      <>
-                        <video
-                          ref={(el) => { videoRefs.current[video.id] = el; }}
-                          src={video.video_url}
-                          poster={video.thumbnail_url || undefined}
-                          className="w-full h-full object-cover"
-                          loop
-                          muted
-                          playsInline
-                          onEnded={() => setPlayingVideoId(null)}
-                        />
-                        <button
-                          onClick={() => toggleVideoPlay(video.id)}
-                          className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors group"
-                        >
-                          {playingVideoId === video.id ? (
-                            <Pause className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                          ) : (
-                            <Play className="w-12 h-12 text-white" />
-                          )}
-                        </button>
-                      </>
-                    ) : video.status === 'generating' ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-pink-500/20 to-orange-500/20">
-                        <Loader2 className="w-10 h-10 text-pink-500 animate-spin mb-2" />
-                        <span className="text-sm text-muted-foreground">Gerando...</span>
-                      </div>
-                    ) : video.thumbnail_url ? (
-                      <img
-                        src={video.thumbnail_url}
-                        alt={video.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <Video className="w-10 h-10 text-muted-foreground" />
-                      </div>
-                    )}
-                    
-                    {/* Status badge */}
-                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${
-                      video.status === 'completed' 
-                        ? 'bg-accent/90 text-accent-foreground' 
-                        : video.status === 'generating'
-                        ? 'bg-pink-500/90 text-white'
-                        : 'bg-destructive/90 text-destructive-foreground'
-                    }`}>
-                      {video.status === 'completed' ? '✓ Pronto' : 
-                       video.status === 'generating' ? '⏳ Gerando' : '✗ Falhou'}
-                    </div>
-
-                    {/* Duration badge */}
-                    {video.duration && (
-                      <div className="absolute bottom-2 right-2 px-2 py-1 rounded bg-black/70 text-white text-xs">
-                        {video.duration}s
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium truncate flex-1">{video.title}</h3>
-                    <button
-                      onClick={() => deleteVideo(video.id)}
-                      disabled={deletingVideoId === video.id}
-                      className="ml-2 p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      title="Excluir vídeo"
-                    >
-                      {deletingVideoId === video.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{getPlatformLabel(video.platform || '')}</span>
-                    <span>•</span>
-                    <span>{new Date(video.created_at).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </motion.div>
 
         {/* Recent creatives */}
