@@ -122,13 +122,16 @@ export default function CreateVideo() {
 
         if (error) throw error;
 
-        const { data: urlData } = supabase.storage
+        // Use signed URL instead of public URL (bucket is private)
+        const { data: urlData, error: urlError } = await supabase.storage
           .from('video-uploads')
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 7200); // 2 hour expiry
+
+        if (urlError) throw urlError;
 
         setImages(prev => prev.map((img, idx) => {
           if (idx === images.length + i) {
-            return { ...img, uploading: false, url: urlData.publicUrl };
+            return { ...img, uploading: false, url: urlData.signedUrl };
           }
           return img;
         }));
@@ -197,7 +200,7 @@ export default function CreateVideo() {
       return;
     }
 
-    // Skip credit check for admins
+    // Client-side credit check (server will verify and deduct)
     if (!isAdmin && (!profile || profile.credits < 2)) {
       toast({
         title: 'Créditos insuficientes',
@@ -231,6 +234,7 @@ export default function CreateVideo() {
 
       if (insertError) throw insertError;
 
+      // Credits are now deducted server-side in the edge function
       // Call edge function
       const { error: generateError } = await supabase.functions.invoke('generate-video', {
         body: {
@@ -251,18 +255,6 @@ export default function CreateVideo() {
           .update({ status: 'failed' })
           .eq('id', video.id);
         throw generateError;
-      }
-
-      // Deduct credits (skip for admins)
-      if (!isAdmin) {
-        const { error: creditError } = await supabase
-          .from('profiles')
-          .update({ credits: profile!.credits - 2 })
-          .eq('id', user!.id);
-
-        if (creditError) {
-          console.error('Error deducting credits:', creditError);
-        }
       }
 
       toast({
