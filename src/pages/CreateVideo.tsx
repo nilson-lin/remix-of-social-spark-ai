@@ -236,7 +236,7 @@ export default function CreateVideo() {
 
       // Credits are now deducted server-side in the edge function
       // Call edge function
-      const { error: generateError } = await supabase.functions.invoke('generate-video', {
+      const { data: generateData, error: generateError } = await supabase.functions.invoke('generate-video', {
         body: {
           videoId: video.id,
           title: formData.title,
@@ -249,12 +249,22 @@ export default function CreateVideo() {
         },
       });
 
-      if (generateError) {
+      const ok = (generateData as any)?.success === true;
+
+      if (generateError || !ok) {
         await supabase
           .from('videos')
           .update({ status: 'failed' })
           .eq('id', video.id);
-        throw generateError;
+
+        const upstreamCode = (generateData as any)?.code;
+        const upstreamMessage = (generateData as any)?.error;
+
+        if (upstreamCode === 'UPSTREAM_CREDITS_EXHAUSTED') {
+          throw new Error('O provedor de vídeo está sem créditos no momento. Tente novamente mais tarde.');
+        }
+
+        throw new Error(upstreamMessage || generateError?.message || 'Ocorreu um erro ao gerar o vídeo.');
       }
 
       toast({
@@ -266,9 +276,14 @@ export default function CreateVideo() {
       navigate('/dashboard');
     } catch (error) {
       console.error('Error creating video:', error);
+
+      const message = error instanceof Error
+        ? error.message
+        : 'Ocorreu um erro. Tente novamente.';
+
       toast({
         title: 'Erro ao gerar',
-        description: 'Ocorreu um erro. Tente novamente.',
+        description: message,
         variant: 'destructive',
       });
     } finally {
@@ -499,8 +514,8 @@ export default function CreateVideo() {
               <div className="space-y-2">
                 <Label>Duração</Label>
                 <Select
-                  value={String(formData.duration)}
-                  onValueChange={(value) => handleChange('duration', parseInt(value))}
+                  value={formData.duration}
+                  onValueChange={(value) => handleChange('duration', value)}
                 >
                   <SelectTrigger className="bg-muted/50 border-border/50">
                     <SelectValue placeholder="Selecione a duração" />
