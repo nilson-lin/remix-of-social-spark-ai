@@ -220,6 +220,41 @@ export const creativeTypePrompts: Record<string, {
     elements: ["before/after", "journey visualization", "emotional triggers", "relatable scenes"],
     callToAction: "Start your journey, Transform today, Your story begins",
   },
+  engajamento: {
+    focus: "interaction, comments, shares, community",
+    elements: ["question prompts", "polls", "interactive elements", "relatable content"],
+    callToAction: "Comment below, Tag a friend, Share your story, What do you think?",
+  },
+  lancamento: {
+    focus: "new product, anticipation, excitement, innovation",
+    elements: ["reveal imagery", "countdown", "exclusive access", "innovation cues"],
+    callToAction: "Be the first, Pre-order now, Coming soon, Join the waitlist",
+  },
+  depoimento: {
+    focus: "social proof, testimonials, reviews, trust",
+    elements: ["quote marks", "star ratings", "real people", "before/after results"],
+    callToAction: "See results, Read reviews, Join thousands, Try it yourself",
+  },
+  educativo: {
+    focus: "tips, knowledge, how-to, value content",
+    elements: ["numbered lists", "infographic style", "step by step", "lightbulb moments"],
+    callToAction: "Save this, Learn more, Follow for tips, Share with friends",
+  },
+  evento: {
+    focus: "event promotion, dates, invitation, attendance",
+    elements: ["date/time", "location", "speakers", "registration CTA"],
+    callToAction: "Register now, Save the date, RSVP, Get your ticket",
+  },
+  recrutamento: {
+    focus: "job openings, career opportunities, company culture",
+    elements: ["benefits", "team photos", "growth imagery", "workplace scenes"],
+    callToAction: "Apply now, Join our team, See open positions, Start your career",
+  },
+  institucional: {
+    focus: "official communication, announcements, company values",
+    elements: ["logo", "official tone", "clean layout", "trust signals"],
+    callToAction: "Learn more, Read the announcement, Visit our website",
+  },
 };
 
 // ========== REDES SOCIAIS ==========
@@ -247,6 +282,36 @@ export const platformSpecs: Record<string, {
     aspectRatio: "various, responsive design",
     style: "clean, professional, clear CTA, conversion-focused",
     attention: "clear value proposition, minimal distraction",
+  },
+  youtube: {
+    aspectRatio: "16:9 landscape, widescreen",
+    style: "cinematic, thumbnail-worthy, bold text-friendly",
+    attention: "high contrast, expressive faces, curiosity gap",
+  },
+  linkedin: {
+    aspectRatio: "1.91:1 landscape or 1:1 square",
+    style: "professional, corporate, thought-leadership",
+    attention: "credibility signals, data-driven, clean design",
+  },
+  twitter: {
+    aspectRatio: "16:9 landscape or 1:1 square",
+    style: "concise, impactful, meme-friendly, shareable",
+    attention: "bold statements, minimal text, quick impact",
+  },
+  pinterest: {
+    aspectRatio: "2:3 vertical, tall pin format",
+    style: "inspirational, beautiful, aspirational, lifestyle",
+    attention: "vertical scroll optimized, rich colors, descriptive",
+  },
+  whatsapp: {
+    aspectRatio: "1:1 square, compact",
+    style: "personal, direct, shareable, mobile-first",
+    attention: "clear at small sizes, instant understanding",
+  },
+  kwai: {
+    aspectRatio: "9:16 vertical, full screen",
+    style: "popular, Brazilian trends, relatable, fun",
+    attention: "instant hook, bright colors, dynamic",
   },
 };
 
@@ -333,6 +398,9 @@ export function buildCopyPrompt(params: {
     leads: "captação de leads e geração de interesse",
     engagement: "engajamento, comentários e compartilhamentos",
     brand: "reconhecimento e fortalecimento de marca",
+    traffic: "geração de tráfego para site/página",
+    downloads: "downloads de app ou material",
+    awareness: "conscientização sobre causa ou tema",
   };
 
   const toneLabels: Record<string, string> = {
@@ -340,13 +408,23 @@ export function buildCopyPrompt(params: {
     informal: "informal, descontraído e próximo",
     persuasive: "persuasivo, convincente e urgente",
     creative: "criativo, inovador e surpreendente",
+    urgent: "urgente, escassez e oportunidade limitada",
+    emotional: "emocional, tocante e inspirador",
+    humorous: "humorístico, divertido e leve",
+    inspirational: "inspiracional, motivador e transformador",
   };
 
   const networkLabels: Record<string, string> = {
-    instagram: "Instagram (carrossel, reels, stories)",
+    instagram: "Instagram (feed, reels, stories)",
     facebook: "Facebook (feed, anúncios)",
     tiktok: "TikTok (vídeos curtos, trends)",
     google_ads: "Google Ads (pesquisa, display)",
+    youtube: "YouTube (thumbnails, banners)",
+    linkedin: "LinkedIn (posts profissionais)",
+    twitter: "Twitter/X (posts curtos e impactantes)",
+    pinterest: "Pinterest (pins inspiracionais)",
+    whatsapp: "WhatsApp (mensagens diretas)",
+    kwai: "Kwai (vídeos populares)",
   };
 
   const typeLabels: Record<string, string> = {
@@ -355,6 +433,13 @@ export function buildCopyPrompt(params: {
     branding: "construção de marca e identidade",
     autoridade: "posicionamento como especialista",
     storytelling: "narrativa emocional e envolvente",
+    engajamento: "interação e participação do público",
+    lancamento: "lançamento de produto ou serviço",
+    depoimento: "prova social e testemunhos",
+    educativo: "conteúdo educativo e dicas",
+    evento: "divulgação de evento",
+    recrutamento: "vagas e oportunidades de carreira",
+    institucional: "comunicação institucional oficial",
   };
 
   return `Você é um copywriter expert em marketing digital brasileiro. Crie copies persuasivas e que convertem.
