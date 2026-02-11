@@ -3,6 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import sampleNotext1 from '@/assets/sample-creative-notext-1.jpg';
+import sampleText1 from '@/assets/sample-creative-text-1.jpg';
+import sampleNotext2 from '@/assets/sample-creative-notext-2.jpg';
+import sampleText2 from '@/assets/sample-creative-text-2.jpg';
+import sampleNotext3 from '@/assets/sample-creative-notext-3.jpg';
+import sampleText3 from '@/assets/sample-creative-text-3.jpg';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,17 +35,36 @@ import {
   Moon,
   Sun,
   Flame,
-  Check
+  Check,
+  Heart,
+  MessageCircle,
+  Calendar,
+  Gift,
+  Users,
+  Star,
+  Lightbulb,
+  Image,
+  RectangleHorizontal,
+  Smartphone,
+  Square,
+  Monitor
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Tipos de criativo
 const creativeTypes = [
-  { id: 'venda', label: 'Venda', icon: ShoppingBag, description: 'Foco em conversão e vendas diretas', color: 'from-green-500 to-emerald-600' },
-  { id: 'promocao', label: 'Promoção', icon: Megaphone, description: 'Ofertas especiais e descontos', color: 'from-orange-500 to-red-500' },
-  { id: 'branding', label: 'Branding', icon: Crown, description: 'Fortalecer identidade da marca', color: 'from-purple-500 to-violet-600' },
-  { id: 'autoridade', label: 'Autoridade', icon: Award, description: 'Posicionamento como expert', color: 'from-blue-500 to-indigo-600' },
-  { id: 'storytelling', label: 'Storytelling', icon: BookOpen, description: 'Contar histórias envolventes', color: 'from-pink-500 to-rose-600' },
+  { id: 'venda', label: 'Venda', icon: ShoppingBag, description: 'Conversão e vendas diretas', color: 'from-green-500 to-emerald-600' },
+  { id: 'promocao', label: 'Promoção', icon: Gift, description: 'Ofertas e descontos', color: 'from-orange-500 to-red-500' },
+  { id: 'branding', label: 'Branding', icon: Crown, description: 'Identidade da marca', color: 'from-purple-500 to-violet-600' },
+  { id: 'autoridade', label: 'Autoridade', icon: Award, description: 'Posicionamento expert', color: 'from-blue-500 to-indigo-600' },
+  { id: 'storytelling', label: 'Storytelling', icon: BookOpen, description: 'Histórias envolventes', color: 'from-pink-500 to-rose-600' },
+  { id: 'engajamento', label: 'Engajamento', icon: MessageCircle, description: 'Interação e comentários', color: 'from-cyan-500 to-teal-600' },
+  { id: 'lancamento', label: 'Lançamento', icon: Star, description: 'Novo produto ou serviço', color: 'from-amber-500 to-yellow-600' },
+  { id: 'depoimento', label: 'Depoimento', icon: Heart, description: 'Prova social e reviews', color: 'from-red-500 to-pink-600' },
+  { id: 'educativo', label: 'Educativo', icon: Lightbulb, description: 'Dicas e conteúdo de valor', color: 'from-indigo-500 to-blue-600' },
+  { id: 'evento', label: 'Evento', icon: Calendar, description: 'Convites e divulgação', color: 'from-violet-500 to-purple-600' },
+  { id: 'recrutamento', label: 'Recrutamento', icon: Users, description: 'Vagas e contratação', color: 'from-teal-500 to-green-600' },
+  { id: 'institucional', label: 'Institucional', icon: Megaphone, description: 'Comunicados oficiais', color: 'from-slate-500 to-gray-600' },
 ];
 
 // Templates visuais
@@ -49,6 +74,16 @@ const visualTemplates = [
   { id: 'dark_premium', label: 'Dark Premium', icon: Moon, description: 'Elegante e exclusivo', preview: 'bg-gradient-to-br from-gray-900 to-black' },
   { id: 'clean', label: 'Clean', icon: Sun, description: 'Leve e acessível', preview: 'bg-gradient-to-br from-sky-100 to-blue-200' },
   { id: 'chamativo', label: 'Chamativo', icon: Flame, description: 'Cores vibrantes e bold', preview: 'bg-gradient-to-br from-fuchsia-500 via-red-500 to-yellow-500' },
+];
+
+// Dimensões disponíveis
+const dimensions = [
+  { id: '1080x1080', label: '1080×1080', aspect: '1:1', icon: Square, description: 'Feed quadrado', platforms: ['Instagram', 'Facebook'] },
+  { id: '1080x1350', label: '1080×1350', aspect: '4:5', icon: Smartphone, description: 'Feed retrato', platforms: ['Instagram', 'Facebook'] },
+  { id: '1080x1920', label: '1080×1920', aspect: '9:16', icon: Smartphone, description: 'Stories / Reels', platforms: ['Instagram', 'TikTok', 'YouTube'] },
+  { id: '1200x628', label: '1200×628', aspect: '1.91:1', icon: RectangleHorizontal, description: 'Anúncio paisagem', platforms: ['Facebook', 'Google Ads', 'LinkedIn'] },
+  { id: '1920x1080', label: '1920×1080', aspect: '16:9', icon: Monitor, description: 'Banner / YouTube', platforms: ['YouTube', 'LinkedIn', 'Twitter'] },
+  { id: '1080x1080_story', label: '800×800', aspect: '1:1', icon: Image, description: 'Post compacto', platforms: ['Twitter', 'WhatsApp'] },
 ];
 
 export default function CreateCreative() {
@@ -65,6 +100,7 @@ export default function CreateCreative() {
     style: '',
     creative_type: '',
     template: '',
+    dimension: '1080x1080',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
@@ -243,7 +279,7 @@ export default function CreateCreative() {
               {/* Creative Type Selection */}
               <div className="mb-8">
                 <Label className="text-lg font-semibold mb-4 block">Tipo de Criativo *</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {creativeTypes.map((type) => {
                     const Icon = type.icon;
                     const isSelected = formData.creative_type === type.id;
@@ -321,6 +357,65 @@ export default function CreateCreative() {
                       </motion.button>
                     );
                   })}
+                </div>
+              </div>
+
+              {/* Dimension Selection */}
+              <div className="mb-8">
+                <Label className="text-lg font-semibold mb-4 block">Dimensão *</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {dimensions.map((dim) => {
+                    const Icon = dim.icon;
+                    const isSelected = formData.dimension === dim.id;
+                    return (
+                      <motion.button
+                        key={dim.id}
+                        type="button"
+                        onClick={() => handleChange('dimension', dim.id)}
+                        className={cn(
+                          "relative p-3 rounded-xl border-2 text-left transition-all duration-300",
+                          isSelected 
+                            ? "border-primary bg-primary/10 shadow-lg" 
+                            : "border-border/50 bg-card/50 hover:border-primary/50 hover:bg-card"
+                        )}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                          </div>
+                        )}
+                        <Icon className="w-5 h-5 mb-2 text-muted-foreground" />
+                        <h3 className="font-semibold text-sm">{dim.label}</h3>
+                        <p className="text-[10px] text-muted-foreground">{dim.aspect} · {dim.description}</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {dim.platforms.slice(0, 2).map(p => (
+                            <span key={p} className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{p}</span>
+                          ))}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Example images */}
+              <div className="mb-8">
+                <Label className="text-lg font-semibold mb-4 block">Exemplos de criativos gerados</Label>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {[
+                    sampleNotext1,
+                    sampleText1,
+                    sampleNotext2,
+                    sampleText2,
+                    sampleNotext3,
+                    sampleText3,
+                  ].map((src, i) => (
+                    <div key={i} className="rounded-lg overflow-hidden border border-border/50 aspect-square">
+                      <img src={src} alt={`Exemplo ${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -412,6 +507,9 @@ export default function CreateCreative() {
                           <SelectItem value="leads">📋 Geração de Leads</SelectItem>
                           <SelectItem value="engagement">💬 Engajamento</SelectItem>
                           <SelectItem value="brand">🏆 Reconhecimento de Marca</SelectItem>
+                          <SelectItem value="traffic">🚀 Tráfego</SelectItem>
+                          <SelectItem value="downloads">📥 Downloads</SelectItem>
+                          <SelectItem value="awareness">📣 Conscientização</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -429,6 +527,12 @@ export default function CreateCreative() {
                           <SelectItem value="facebook">👍 Facebook</SelectItem>
                           <SelectItem value="tiktok">🎵 TikTok</SelectItem>
                           <SelectItem value="google_ads">🔍 Google Ads</SelectItem>
+                          <SelectItem value="youtube">▶️ YouTube</SelectItem>
+                          <SelectItem value="linkedin">💼 LinkedIn</SelectItem>
+                          <SelectItem value="twitter">🐦 Twitter / X</SelectItem>
+                          <SelectItem value="pinterest">📌 Pinterest</SelectItem>
+                          <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
+                          <SelectItem value="kwai">🎬 Kwai</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -450,6 +554,10 @@ export default function CreateCreative() {
                           <SelectItem value="informal">😊 Informal</SelectItem>
                           <SelectItem value="persuasive">🎯 Persuasivo</SelectItem>
                           <SelectItem value="creative">🎨 Criativo</SelectItem>
+                          <SelectItem value="urgent">⚡ Urgente</SelectItem>
+                          <SelectItem value="emotional">❤️ Emocional</SelectItem>
+                          <SelectItem value="humorous">😄 Humorístico</SelectItem>
+                          <SelectItem value="inspirational">🌟 Inspiracional</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -467,6 +575,10 @@ export default function CreateCreative() {
                           <SelectItem value="advertising">📢 Publicitário</SelectItem>
                           <SelectItem value="realistic">📷 Realista</SelectItem>
                           <SelectItem value="modern">🚀 Moderno</SelectItem>
+                          <SelectItem value="artistic">🎨 Artístico</SelectItem>
+                          <SelectItem value="retro">📻 Retrô</SelectItem>
+                          <SelectItem value="futuristic">🤖 Futurista</SelectItem>
+                          <SelectItem value="organic">🌿 Orgânico / Natural</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
