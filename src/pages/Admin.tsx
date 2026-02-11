@@ -48,7 +48,7 @@ interface UserProfile {
   credits: number;
   plan: string;
   created_at: string;
-  email?: string;
+  email: string | null;
 }
 
 interface UserRole {
@@ -63,7 +63,7 @@ export default function Admin() {
   const [userRoles, setUserRoles] = useState<Record<string, string>>({});
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [addRoleUserId, setAddRoleUserId] = useState('');
+  const [addRoleEmail, setAddRoleEmail] = useState('');
   const [addRoleType, setAddRoleType] = useState<string>('admin');
   const [isAddingRole, setIsAddingRole] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -141,22 +141,22 @@ export default function Admin() {
   };
 
   const addRole = async () => {
-    if (!addRoleUserId.trim()) {
-      toast.error('Digite o ID do usuário');
+    if (!addRoleEmail.trim()) {
+      toast.error('Digite o email do usuário');
       return;
     }
 
     setIsAddingRole(true);
 
-    // Check if user exists
+    // Look up user by email
     const { data: userExists } = await supabase
       .from('profiles')
       .select('id')
-      .eq('id', addRoleUserId)
+      .eq('email', addRoleEmail.trim())
       .single();
 
     if (!userExists) {
-      toast.error('Usuário não encontrado');
+      toast.error('Usuário não encontrado com esse email');
       setIsAddingRole(false);
       return;
     }
@@ -164,7 +164,7 @@ export default function Admin() {
     const { error } = await supabase
       .from('user_roles')
       .upsert({ 
-        user_id: addRoleUserId, 
+        user_id: userExists.id, 
         role: addRoleType as 'admin' | 'moderator' | 'user'
       }, {
         onConflict: 'user_id,role'
@@ -174,7 +174,7 @@ export default function Admin() {
       toast.error('Erro ao adicionar role: ' + error.message);
     } else {
       toast.success('Role adicionada com sucesso!');
-      setAddRoleUserId('');
+      setAddRoleEmail('');
       setDialogOpen(false);
       fetchRoles();
     }
@@ -197,6 +197,7 @@ export default function Admin() {
 
   const filteredUsers = users.filter(user => 
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -317,7 +318,7 @@ export default function Admin() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por nome ou ID..."
+                placeholder="Buscar por nome, email ou ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -335,16 +336,17 @@ export default function Admin() {
                 <DialogHeader>
                   <DialogTitle>Adicionar Role a Usuário</DialogTitle>
                   <DialogDescription>
-                    Digite o ID do usuário e selecione a role desejada.
+                    Digite o email do usuário e selecione a role desejada.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div>
-                    <label className="text-sm font-medium mb-2 block">ID do Usuário</label>
+                    <label className="text-sm font-medium mb-2 block">Email do Usuário</label>
                     <Input
-                      placeholder="UUID do usuário..."
-                      value={addRoleUserId}
-                      onChange={(e) => setAddRoleUserId(e.target.value)}
+                      placeholder="email@exemplo.com"
+                      type="email"
+                      value={addRoleEmail}
+                      onChange={(e) => setAddRoleEmail(e.target.value)}
                     />
                   </div>
                   <div>
@@ -401,8 +403,8 @@ export default function Admin() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{userProfile.full_name || 'Sem nome'}</p>
-                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">
-                            {userProfile.id}
+                          <p className="text-xs text-muted-foreground truncate max-w-[250px]">
+                            {userProfile.email || userProfile.id}
                           </p>
                         </div>
                       </TableCell>
