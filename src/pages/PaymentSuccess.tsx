@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,27 +13,34 @@ const PaymentSuccess = () => {
   const { refreshProfile } = useAuth();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(true);
+  const [error, setError] = useState(false);
 
-  const credits = parseInt(searchParams.get("credits") || "0");
-  const planId = searchParams.get("plan") || "";
+  const sessionId = searchParams.get("session_id") || "";
 
   useEffect(() => {
-    const addCredits = async () => {
+    const verifyAndAddCredits = async () => {
+      if (!sessionId) {
+        setError(true);
+        setIsProcessing(false);
+        return;
+      }
+
       try {
         const { error } = await supabase.functions.invoke("add-credits", {
-          body: { credits, planId },
+          body: { session_id: sessionId },
         });
 
         if (error) throw error;
 
         await refreshProfile();
-        
+
         toast({
           title: "Pagamento confirmado!",
-          description: `${credits} créditos foram adicionados à sua conta.`,
+          description: "Seus créditos foram adicionados à sua conta.",
         });
-      } catch (error) {
-        console.error("Error adding credits:", error);
+      } catch (err) {
+        console.error("Error adding credits:", err);
+        setError(true);
         toast({
           title: "Erro ao processar",
           description: "Entre em contato com o suporte.",
@@ -44,12 +51,8 @@ const PaymentSuccess = () => {
       }
     };
 
-    if (credits > 0) {
-      addCredits();
-    } else {
-      setIsProcessing(false);
-    }
-  }, [credits, planId, refreshProfile, toast]);
+    verifyAndAddCredits();
+  }, [sessionId, refreshProfile, toast]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -62,14 +65,25 @@ const PaymentSuccess = () => {
           <>
             <Loader2 className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
             <h1 className="text-2xl font-bold mb-2">Processando pagamento...</h1>
-            <p className="text-muted-foreground">Aguarde enquanto adicionamos seus créditos.</p>
+            <p className="text-muted-foreground">Aguarde enquanto verificamos seu pagamento.</p>
+          </>
+        ) : error ? (
+          <>
+            <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+            <h1 className="text-2xl font-bold mb-2">Erro no processamento</h1>
+            <p className="text-muted-foreground mb-6">
+              Não foi possível verificar seu pagamento. Entre em contato com o suporte.
+            </p>
+            <Button onClick={() => navigate("/dashboard")} className="w-full">
+              Voltar ao Dashboard
+            </Button>
           </>
         ) : (
           <>
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold mb-2">Pagamento realizado com sucesso!</h1>
             <p className="text-muted-foreground mb-6">
-              {credits} créditos foram adicionados à sua conta.
+              Seus créditos foram adicionados à sua conta.
             </p>
             <Button onClick={() => navigate("/dashboard")} className="w-full">
               Ir para o Dashboard
