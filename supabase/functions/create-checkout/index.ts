@@ -10,8 +10,8 @@ const corsHeaders = {
 
 const PLANS = {
   inicial: {
-    priceId: "price_1SqzBjK5AN13ee1A8CLOZSWS",
-    credits: 10,
+    priceId: "price_1T0YOpK5AN13ee1AjxfomJxF",
+    credits: 20,
   },
   pro: {
     priceId: "price_1SqzC0K5AN13ee1AfFo3RvlJ",
