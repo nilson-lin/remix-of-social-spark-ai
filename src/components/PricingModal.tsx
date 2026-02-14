@@ -21,10 +21,10 @@ const plans = [
     id: "inicial",
     name: "Plano Inicial",
     price: "R$ 19,90",
-    credits: 10,
+    credits: 20,
     icon: Zap,
     description: "Perfeito para começar",
-    features: ["10 créditos", "Geração de criativos", "Suporte por email"],
+    features: ["20 créditos", "Geração de criativos", "Suporte por email"],
   },
   {
     id: "pro",
