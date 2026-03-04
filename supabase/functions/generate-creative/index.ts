@@ -17,7 +17,7 @@ const CreativeInputSchema = z.object({
   social_network: z.enum(['instagram', 'facebook', 'tiktok', 'linkedin', 'twitter']),
   tone: z.string().min(2).max(50),
   style: z.string().min(2).max(50),
-  creative_type: z.enum(['venda', 'promocao', 'branding', 'autoridade', 'storytelling']).optional().default('venda'),
+  creative_type: z.enum(['venda', 'promocao', 'branding', 'autoridade', 'storytelling', 'engajamento', 'lancamento', 'depoimento', 'educativo', 'evento', 'recrutamento', 'institucional']).optional().default('venda'),
   template: z.enum(['minimalista', 'publicitario', 'dark_premium', 'clean', 'chamativo']).optional().default('minimalista'),
 });
 
